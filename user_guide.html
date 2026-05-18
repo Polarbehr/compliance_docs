@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tessera — User Guide</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      line-height: 1.75;
+      padding: 48px 24px 100px;
+    }
+    .wrap { max-width: 780px; margin: 0 auto; }
+
+    /* ── Header ── */
+    header { margin-bottom: 56px; border-bottom: 1px solid rgba(50,205,50,0.2); padding-bottom: 40px; }
+    .logo-row { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; width: 44px; height: 44px; flex-shrink: 0; }
+    .t { border-radius: 4px; }
+    .t.l { background: #32CD32; box-shadow: 0 0 8px rgba(50,205,50,0.5); }
+    .t.m { background: rgba(50,205,50,0.3); }
+    .t.d { background: rgba(255,255,255,0.07); }
+    h1 { font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #fff; text-transform: uppercase; }
+    .doc-subtitle { font-size: 13px; font-weight: 700; letter-spacing: 4px; color: rgba(255,255,255,0.35); text-transform: uppercase; margin-top: 6px; }
+    .tagline { margin-top: 16px; font-size: 15px; color: rgba(255,255,255,0.5); letter-spacing: 1px; max-width: 560px; }
+
+    /* ── TOC ── */
+    .toc { background: rgba(50,205,50,0.05); border: 1px solid rgba(50,205,50,0.15); border-radius: 12px; padding: 28px 32px; margin-bottom: 56px; }
+    .toc-title { font-size: 11px; font-weight: 700; letter-spacing: 4px; color: #32CD32; text-transform: uppercase; margin-bottom: 16px; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { font-size: 14px; color: rgba(255,255,255,0.6); text-decoration: none; letter-spacing: 1px; }
+    .toc a:hover { color: #32CD32; }
+
+    /* ── Sections ── */
+    section { margin-bottom: 64px; }
+    h2 {
+      font-size: 11px; font-weight: 700; letter-spacing: 5px; text-transform: uppercase;
+      color: #32CD32; margin-bottom: 6px;
+    }
+    h2::before { content: '◆  '; }
+    .section-title { font-size: 26px; font-weight: 800; color: #fff; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+
+    h3 { font-size: 14px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.8); margin: 28px 0 10px; }
+    p { font-size: 15px; color: rgba(255,255,255,0.65); margin-bottom: 14px; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; }
+    li { font-size: 15px; color: rgba(255,255,255,0.65); margin-bottom: 7px; }
+    strong { color: rgba(255,255,255,0.9); font-weight: 700; }
+    code { font-family: monospace; font-size: 13px; background: rgba(255,255,255,0.07); padding: 2px 7px; border-radius: 4px; color: #32CD32; }
+
+    /* ── Callout boxes ── */
+    .callout {
+      border-radius: 10px; padding: 18px 22px; margin: 20px 0; display: flex; gap: 14px; align-items: flex-start;
+    }
+    .callout.green { background: rgba(50,205,50,0.07); border-left: 3px solid #32CD32; }
+    .callout.yellow { background: rgba(255,200,0,0.07); border-left: 3px solid #FFC800; }
+    .callout.red { background: rgba(255,60,60,0.07); border-left: 3px solid #FF3C3C; }
+    .callout.blue { background: rgba(0,229,255,0.07); border-left: 3px solid #00E5FF; }
+    .callout-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+    .callout p { margin: 0; font-size: 14px; }
+    .callout.green p { color: rgba(50,205,50,0.9); }
+    .callout.yellow p { color: rgba(255,200,0,0.9); }
+    .callout.red p { color: rgba(255,100,100,0.9); }
+    .callout.blue p { color: rgba(0,229,255,0.85); }
+
+    /* ── Step list ── */
+    .steps { counter-reset: step; list-style: none; padding: 0; }
+    .steps li {
+      counter-increment: step; padding: 14px 16px 14px 56px; position: relative;
+      margin-bottom: 8px; background: rgba(255,255,255,0.03); border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .steps li::before {
+      content: counter(step); position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+      width: 28px; height: 28px; border-radius: 50%; background: #32CD32;
+      color: #0a0a0f; font-size: 13px; font-weight: 900; display: flex; align-items: center; justify-content: center;
+      line-height: 28px; text-align: center;
+    }
+
+    /* ── Feature card ── */
+    .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+    .feature-card {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 20px;
+    }
+    .feature-card h4 { font-size: 12px; font-weight: 700; letter-spacing: 3px; color: #32CD32; margin-bottom: 8px; text-transform: uppercase; }
+    .feature-card p { font-size: 13px; color: rgba(255,255,255,0.55); margin: 0; }
+
+    /* ── Settings table ── */
+    .settings-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .settings-table th { font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.35); text-align: left; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .settings-table td { font-size: 14px; color: rgba(255,255,255,0.65); padding: 12px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top; }
+    .settings-table td:first-child { color: rgba(255,255,255,0.9); font-weight: 600; white-space: nowrap; }
+    .settings-table tr:last-child td { border-bottom: none; }
+
+    /* ── Danger zone ── */
+    .danger-box {
+      background: rgba(255,40,40,0.06); border: 1px solid rgba(255,40,40,0.25);
+      border-radius: 12px; padding: 24px 28px; margin: 20px 0;
+    }
+    .danger-box h3 { color: #FF4444; margin-top: 0; }
+    .danger-box p, .danger-box li { color: rgba(255,150,150,0.8); }
+
+    /* ── Footer ── */
+    footer { margin-top: 80px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.07); font-size: 12px; color: rgba(255,255,255,0.2); letter-spacing: 2px; text-align: center; }
+
+    @media (max-width: 600px) { .feature-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="logo-row">
+      <div class="tiles">
+        <div class="t l"></div><div class="t d"></div><div class="t m"></div>
+        <div class="t d"></div><div class="t l"></div><div class="t d"></div>
+        <div class="t m"></div><div class="t d"></div><div class="t l"></div>
+      </div>
+      <div>
+        <h1>Tessera</h1>
+        <div class="doc-subtitle">User Guide &nbsp;·&nbsp; v1.0</div>
+      </div>
+    </div>
+    <p class="tagline">Tessera is a zero-trust encrypted messaging application. Every message is encrypted on your device before it leaves — your server never sees plaintext, and neither does anyone else.</p>
+  </header>
+
+  <!-- ── TABLE OF CONTENTS ── -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#getting-started">Getting Started — First Launch</a></li>
+      <li><a href="#pin">PIN &amp; Duress PIN</a></li>
+      <li><a href="#identity">Your Identity &amp; PGP Keys</a></li>
+      <li><a href="#contacts">Adding Contacts</a></li>
+      <li><a href="#messaging">Sending &amp; Receiving Messages</a></li>
+      <li><a href="#burn">Burn After Read</a></li>
+      <li><a href="#settings">Settings Reference</a></li>
+      <li><a href="#ttl">Message Time-to-Live (TTL)</a></li>
+      <li><a href="#dms">Dead Man Switch</a></li>
+      <li><a href="#ele">Extinction Level Event (E.L.E.)</a></li>
+      <li><a href="#security">Security Model</a></li>
+    </ol>
+  </div>
+
+  <!-- ── 1. GETTING STARTED ── -->
+  <section id="getting-started">
+    <h2>Section 1</h2>
+    <div class="section-title">Getting Started — First Launch</div>
+
+    <p>On first launch Tessera runs through a one-time setup called <strong>System Initialization</strong>. This generates your cryptographic identity and configures your privacy preferences. It takes about 30 seconds.</p>
+
+    <h3>Setup Steps</h3>
+    <ol class="steps">
+      <li>Open Tessera. The <strong>System Initialization</strong> screen appears automatically.</li>
+      <li>Review and set your <strong>Privacy &amp; Presence</strong> preferences — whether your online status is visible to contacts.</li>
+      <li>Set your <strong>Message Time-to-Live (TTL)</strong> — how long messages persist before auto-deletion. Default: 24 hours.</li>
+      <li>Set your <strong>Dead Man Switch</strong> interval — how many days of inactivity trigger an automatic wipe. Default: 7 days.</li>
+      <li>Tap <strong>CREATE ACCOUNT</strong>. Tessera generates a 4096-bit RSA PGP key pair directly on your device.</li>
+      <li>Wait for the progress bar to complete. Your <strong>PGP Identity Fingerprint</strong> will appear — this is your cryptographic identity.</li>
+      <li>You will be prompted to set your <strong>PIN</strong>. Choose a 6-digit PIN you will remember.</li>
+    </ol>
+
+    <div class="callout green">
+      <span class="callout-icon">🔑</span>
+      <p>Your private key is generated entirely on your device and never transmitted anywhere. Tessera uploads only your <strong>public key</strong> to the relay server so contacts can find and message you.</p>
+    </div>
+  </section>
+
+  <!-- ── 2. PIN ── -->
+  <section id="pin">
+    <h2>Section 2</h2>
+    <div class="section-title">PIN &amp; Duress PIN</div>
+
+    <p>Tessera uses a PIN to protect access to the app. The PIN screen uses a circular dial layout with randomizable button positions to defeat shoulder-surfing and screen-recording attacks.</p>
+
+    <h3>Your Main PIN</h3>
+    <ul>
+      <li>6 digits, required every time you open the app.</li>
+      <li>Enter digits using the circular dial, then tap <strong>ENTER PIN</strong>.</li>
+      <li>PIN numbers can be randomized on each entry — enable this in Settings under <strong>Authentication → Randomize PIN Numbers</strong>.</li>
+    </ul>
+
+    <h3>Duress PIN</h3>
+    <p>The Duress PIN is a secondary PIN that silently triggers an emergency response when entered. It is designed for situations where you are forced to unlock the app under coercion.</p>
+    <ul>
+      <li>Set up from the login screen by tapping <strong>CREATE DURESS PIN</strong>.</li>
+      <li>When the Duress PIN is entered, the app appears to open normally while silently initiating protective actions in the background.</li>
+      <li>Your Duress PIN must be different from your main PIN.</li>
+    </ul>
+
+    <div class="callout yellow">
+      <span class="callout-icon">⚠️</span>
+      <p>Never set your Duress PIN to a number sequence close to your main PIN. Choose something memorable but distinctly different.</p>
+    </div>
+  </section>
+
+  <!-- ── 3. IDENTITY ── -->
+  <section id="identity">
+    <h2>Section 3</h2>
+    <div class="section-title">Your Identity &amp; PGP Keys</div>
+
+    <p>Your identity in Tessera is your PGP key pair — a public key and a private key generated together on your device during setup.</p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h4>Public Key</h4>
+        <p>Shared with contacts and stored on the relay server. Used by others to encrypt messages to you. Safe to share openly.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Private Key</h4>
+        <p>Never leaves your device. Used to decrypt messages sent to you. Protected by your PIN and the device's secure storage.</p>
+      </div>
+    </div>
+
+    <h3>Sharing Your Identity</h3>
+    <p>To add a contact, both users need to exchange public keys. Access your Identity Exchange from <strong>Settings → Identity Management</strong>.</p>
+    <ol class="steps">
+      <li>Open <strong>Identity Exchange</strong> from the Settings screen.</li>
+      <li>Your QR code is displayed — have your contact scan it with their device's camera icon in their own Identity Exchange screen. The QR contains your key fingerprint; the full key is fetched from the relay automatically.</li>
+      <li>Alternatively, tap <strong>COPY RAW PGP KEY</strong> and share it via any channel (email, Signal, in person).</li>
+    </ol>
+
+    <div class="callout blue">
+      <span class="callout-icon">ℹ️</span>
+      <p>The QR code contains only your key <strong>fingerprint</strong>, not the full key. The full public key is fetched from the relay server after the fingerprint is verified. This keeps QR codes small and scannable.</p>
+    </div>
+  </section>
+
+  <!-- ── 4. CONTACTS ── -->
+  <section id="contacts">
+    <h2>Section 4</h2>
+    <div class="section-title">Adding Contacts</div>
+
+    <p>Tessera contacts are added by exchanging PGP public keys — no phone numbers, usernames, or email addresses required.</p>
+
+    <h3>Adding a Contact</h3>
+    <ol class="steps">
+      <li>Open the <strong>Contacts</strong> screen from the main navigation.</li>
+      <li>Tap the <strong>+</strong> button to add a new contact.</li>
+      <li>Scan your contact's QR code using the camera, or paste their raw PGP public key.</li>
+      <li>Assign a local display name — this name is stored only on your device and never transmitted.</li>
+      <li>The contact's public key is verified and stored locally. They now appear in your contacts list.</li>
+    </ol>
+
+    <h3>Contact Status</h3>
+    <p>The contacts screen shows which of your contacts are currently online. Status visibility is controlled by each user's own privacy settings.</p>
+    <ul>
+      <li><strong>Green dot</strong> — contact is online and reachable.</li>
+      <li><strong>No dot / greyed out</strong> — contact is offline or has hidden their status.</li>
+    </ul>
+
+    <h3>Secure Notes</h3>
+    <p>The <strong>SECURE NOTES</strong> button on the Contacts screen opens an encrypted local notepad — useful for storing sensitive information that is protected by the same encryption as your messages.</p>
+  </section>
+
+  <!-- ── 5. MESSAGING ── -->
+  <section id="messaging">
+    <h2>Section 5</h2>
+    <div class="section-title">Sending &amp; Receiving Messages</div>
+
+    <p>All messages are encrypted on your device before being sent. The relay server only ever sees ciphertext.</p>
+
+    <h3>Sending a Message</h3>
+    <ol class="steps">
+      <li>Tap a contact to open the conversation.</li>
+      <li>Type your message in the input field at the bottom of the screen.</li>
+      <li>Tap the <strong>send</strong> button. The message is encrypted using your contact's public key before leaving your device.</li>
+      <li>The encrypted ciphertext is routed through the relay and delivered to your contact's device.</li>
+      <li>Once delivered and acknowledged, the ciphertext is immediately deleted from the relay server.</li>
+    </ol>
+
+    <h3>Receiving a Message</h3>
+    <ul>
+      <li>Incoming messages arrive as encrypted ciphertext and are decrypted in memory using your private key.</li>
+      <li>Decrypted content is displayed only while you are actively viewing the conversation.</li>
+      <li>Messages are stored on your device in encrypted form — they are never written to disk as plaintext.</li>
+    </ul>
+
+    <h3>Message States</h3>
+    <table class="settings-table">
+      <tr><th>Indicator</th><th>Meaning</th></tr>
+      <tr><td>Single tick</td><td>Sent to relay server</td></tr>
+      <tr><td>Double tick</td><td>Delivered to contact's device — deleted from server</td></tr>
+      <tr><td>🔥 Fire icon</td><td>Burn After Read is active on this message</td></tr>
+    </table>
+
+    <div class="callout green">
+      <span class="callout-icon">🔒</span>
+      <p>The <strong>PGP SECURED</strong> banner at the top of every conversation confirms that end-to-end encryption is active and your contact's public key has been verified.</p>
+    </div>
+  </section>
+
+  <!-- ── 6. BURN AFTER READ ── -->
+  <section id="burn">
+    <h2>Section 6</h2>
+    <div class="section-title">Burn After Read</div>
+
+    <p>Burn After Read causes a message to be permanently deleted from both devices immediately after the recipient opens it. Once read, it is gone.</p>
+
+    <h3>Sending a Burn Message</h3>
+    <ol class="steps">
+      <li>In the chat screen, tap the <strong>🔥 fire toggle</strong> next to the message input field to enable Burn After Read mode.</li>
+      <li>Type and send your message as normal. It will be flagged as a burn message.</li>
+      <li>The fire icon will appear on the message bubble to indicate its status.</li>
+      <li>When your contact opens the message, it is deleted from their device and yours simultaneously.</li>
+    </ol>
+
+    <div class="callout yellow">
+      <span class="callout-icon">⚠️</span>
+      <p>Burn After Read cannot be undone after a message is sent. Once the recipient reads it, both copies are permanently deleted with no recovery possible.</p>
+    </div>
+  </section>
+
+  <!-- ── 7. SETTINGS ── -->
+  <section id="settings">
+    <h2>Section 7</h2>
+    <div class="section-title">Settings Reference</div>
+
+    <h3>Privacy &amp; Presence</h3>
+    <table class="settings-table">
+      <tr><th>Setting</th><th>Description</th></tr>
+      <tr><td>Display Online Status</td><td>Controls whether you appear as online to your contacts when the app is active.</td></tr>
+      <tr><td>Allow Others to See My Status</td><td>Secondary control — even if you display a status, this lets you hide it from all contacts.</td></tr>
+    </table>
+
+    <h3>Authentication</h3>
+    <table class="settings-table">
+      <tr><th>Setting</th><th>Description</th></tr>
+      <tr><td>Randomize PIN Numbers</td><td>Shuffles the PIN dial button positions on every login attempt, making it impossible to identify your PIN from tap patterns or screen wear.</td></tr>
+    </table>
+
+    <h3>Identity Management</h3>
+    <table class="settings-table">
+      <tr><th>Setting</th><th>Description</th></tr>
+      <tr><td>Identity Exchange</td><td>Opens your QR code and public key sharing dialog for adding new contacts.</td></tr>
+    </table>
+
+    <h3>Data Expiry Protocols</h3>
+    <table class="settings-table">
+      <tr><th>Setting</th><th>Description</th></tr>
+      <tr><td>Message TTL</td><td>Time before stored messages are automatically deleted from your device. Configurable in hours or days.</td></tr>
+      <tr><td>Dead Man Switch</td><td>Number of days of inactivity before an automatic full wipe is triggered. See Section 9.</td></tr>
+    </table>
+  </section>
+
+  <!-- ── 8. TTL ── -->
+  <section id="ttl">
+    <h2>Section 8</h2>
+    <div class="section-title">Message Time-to-Live (TTL)</div>
+
+    <p>TTL sets an automatic expiry timer on all messages stored on your device. When a message reaches its TTL, it is permanently deleted from local storage.</p>
+
+    <ul>
+      <li>Configurable from the <strong>Onboarding screen</strong> (first launch) or <strong>Settings → Data Expiry Protocols</strong>.</li>
+      <li>Units can be set to <strong>hours</strong> or <strong>days</strong> using the dropdown next to the value.</li>
+      <li>TTL applies to all conversations. Individual message TTLs are not currently supported.</li>
+      <li>Setting TTL to a very short value (e.g. 1 hour) maximises privacy — messages disappear quickly even if your device is compromised after a conversation.</li>
+    </ul>
+
+    <div class="callout blue">
+      <span class="callout-icon">ℹ️</span>
+      <p>TTL only governs local device storage. Server-side deletion happens immediately on delivery regardless of your TTL setting.</p>
+    </div>
+  </section>
+
+  <!-- ── 9. DEAD MAN SWITCH ── -->
+  <section id="dms">
+    <h2>Section 9</h2>
+    <div class="section-title">Dead Man Switch</div>
+
+    <p>The Dead Man Switch is an automatic wipe trigger. If you do not open the app within the configured number of days, Tessera assumes you are unable to access your device and wipes all data automatically.</p>
+
+    <h3>How It Works</h3>
+    <ul>
+      <li>Every time you successfully log in, the Dead Man Switch timer resets.</li>
+      <li>If the timer expires without a login, Tessera initiates a full local data wipe.</li>
+      <li>The wipe includes all messages, keys, and contact data stored on the device.</li>
+      <li>The timer is configured in days — default is <strong>7 days</strong>.</li>
+    </ul>
+
+    <div class="callout yellow">
+      <span class="callout-icon">⚠️</span>
+      <p>Set the Dead Man Switch interval to a realistic value for your usage habits. If you go on holiday and forget to open the app, the switch will fire. A minimum of 14–30 days is recommended for most users.</p>
+    </div>
+
+    <h3>Server-Side Dead Man Switch</h3>
+    <p>Independently of the app, the relay server also monitors account activity. If your account has not been active within the configured server-side interval, the server will automatically purge your public key and any queued data from the relay.</p>
+  </section>
+
+  <!-- ── 10. ELE ── -->
+  <section id="ele">
+    <h2>Section 10</h2>
+    <div class="section-title">Extinction Level Event (E.L.E.)</div>
+
+    <div class="danger-box">
+      <h3>⚠ IRREVERSIBLE — READ CAREFULLY</h3>
+      <p>The E.L.E. is a total destruction function. Once executed, <strong>all data is permanently deleted with no possibility of recovery</strong>. There is no undo, no backup, no customer support recovery path. This action is final.</p>
+    </div>
+
+    <h3>What E.L.E. Does</h3>
+    <ul>
+      <li>Deletes all messages from local encrypted storage.</li>
+      <li>Wipes all cryptographic keys from the device's secure storage.</li>
+      <li>Removes all contact data and app preferences.</li>
+      <li>Sends a deletion request to the relay server — your public key and all server-side records are permanently removed.</li>
+      <li>Disables the app from the device launcher — it will no longer appear in your app list.</li>
+      <li>Prevents the app from re-initializing until it is fully uninstalled and reinstalled.</li>
+    </ul>
+
+    <h3>How to Execute E.L.E.</h3>
+    <ol class="steps">
+      <li>On the <strong>Login screen</strong>, locate the E.L.E. swipe control at the bottom of the screen.</li>
+      <li>Swipe across the control to initiate the sequence. A multi-step confirmation will appear.</li>
+      <li>Enter your PIN when prompted to confirm your identity.</li>
+      <li>Confirm the final irreversible wipe prompt. The operation begins immediately.</li>
+    </ol>
+
+    <h3>When to Use E.L.E.</h3>
+    <ul>
+      <li>Your device has been seized or is about to be.</li>
+      <li>You believe your device has been compromised.</li>
+      <li>You are permanently decommissioning the app.</li>
+      <li>You want to start fresh with a new identity.</li>
+    </ul>
+
+    <div class="callout red">
+      <span class="callout-icon">☠</span>
+      <p>After E.L.E. executes, your contacts will no longer be able to send you encrypted messages — your public key no longer exists on the relay. You will need to reinstall and re-pair with all contacts from scratch if you choose to use Tessera again.</p>
+    </div>
+  </section>
+
+  <!-- ── 11. SECURITY MODEL ── -->
+  <section id="security">
+    <h2>Section 11</h2>
+    <div class="section-title">Security Model</div>
+
+    <p>Understanding how Tessera's security works helps you use it more effectively and identify its limits.</p>
+
+    <h3>What Tessera Protects Against</h3>
+    <ul>
+      <li><strong>Server compromise</strong> — the relay server holds only ciphertext and public keys. A full server breach exposes nothing readable.</li>
+      <li><strong>Network interception</strong> — all data is encrypted before transmission, over TLS. Intercepted traffic is double-encrypted.</li>
+      <li><strong>Data retention</strong> — messages are deleted from the server immediately on delivery. Nothing accumulates.</li>
+      <li><strong>Coercion</strong> — the Duress PIN and E.L.E. provide mechanisms to respond to forced access.</li>
+      <li><strong>Device loss</strong> — local data is encrypted at rest. Without your PIN, stored messages cannot be read.</li>
+    </ul>
+
+    <h3>What Tessera Does Not Protect Against</h3>
+    <ul>
+      <li><strong>Unlocked device access</strong> — if someone has your unlocked device and your PIN, they can read your messages. No software can protect against physical access to an authenticated session.</li>
+      <li><strong>Compromised contacts</strong> — if your contact's device is compromised and their private key is stolen, an attacker can decrypt messages sent to them. Tessera cannot control contact-side security.</li>
+      <li><strong>Screen recording</strong> — content visible on screen can be captured by screen recording tools. Randomize PIN is one mitigation; be aware of your surroundings.</li>
+      <li><strong>Metadata</strong> — while message content is encrypted, the fact that two accounts exchanged messages at a given time may be observable at the network level.</li>
+    </ul>
+
+    <div class="callout green">
+      <span class="callout-icon">🛡</span>
+      <p>Tessera's zero-trust design means <strong>we assume the server is hostile</strong>. The security model is designed to hold even if the relay server is fully compromised, subpoenaed, or operated by an adversary.</p>
+    </div>
+  </section>
+
+  <footer>
+    TESSERA &nbsp;·&nbsp; com.ccmhat.tessera &nbsp;·&nbsp; &copy; 2025 CCM Hat &nbsp;·&nbsp; polarbehr.designs@gmail.com
+  </footer>
+
+</div>
+</body>
+</html>
