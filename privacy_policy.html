@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tessera — Privacy Policy</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      line-height: 1.75;
+      padding: 48px 24px 80px;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    header { margin-bottom: 48px; border-bottom: 1px solid rgba(50,205,50,0.25); padding-bottom: 32px; }
+    .logo-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 3px; width: 36px; height: 36px; }
+    .t { border-radius: 3px; }
+    .t.l { background: #32CD32; }
+    .t.m { background: rgba(50,205,50,0.3); }
+    .t.d { background: rgba(255,255,255,0.08); }
+    h1 { font-size: 28px; font-weight: 800; letter-spacing: 6px; color: #fff; text-transform: uppercase; }
+    .meta { font-size: 13px; color: rgba(255,255,255,0.35); letter-spacing: 2px; margin-top: 8px; }
+    h2 {
+      font-size: 13px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase;
+      color: #32CD32; margin: 40px 0 12px;
+    }
+    p { font-size: 15px; color: rgba(255,255,255,0.7); margin-bottom: 12px; }
+    ul { padding-left: 20px; margin-bottom: 12px; }
+    li { font-size: 15px; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+    .highlight {
+      background: rgba(50,205,50,0.07);
+      border-left: 3px solid #32CD32;
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin: 24px 0;
+    }
+    .highlight p { margin: 0; color: rgba(255,255,255,0.85); }
+    a { color: #32CD32; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 13px; color: rgba(255,255,255,0.25); letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo-row">
+      <div class="tiles">
+        <div class="t l"></div><div class="t d"></div><div class="t m"></div>
+        <div class="t d"></div><div class="t l"></div><div class="t d"></div>
+        <div class="t m"></div><div class="t d"></div><div class="t l"></div>
+      </div>
+      <h1>Tessera</h1>
+    </div>
+    <div class="meta">PRIVACY POLICY &nbsp;·&nbsp; EFFECTIVE DATE: MAY 2025</div>
+  </header>
+
+  <div class="highlight">
+    <p>Tessera is built on a zero-trust philosophy. Your messages are encrypted on your device before they leave it. We never have access to your message content — not now, not ever.</p>
+  </div>
+
+  <h2>1. Who We Are</h2>
+  <p>Tessera is a private, encrypted messaging application developed by CCM Hat. The relay server operates at <code>relay.ccmhat.com</code>. Questions about this policy can be directed to <a href="mailto:polarbehr.designs@gmail.com">polarbehr.designs@gmail.com</a>.</p>
+
+  <h2>2. What Data We Collect</h2>
+  <p>Tessera collects the absolute minimum required for the app to function:</p>
+  <ul>
+    <li><strong>Your PGP public key</strong> — uploaded to the relay server when you create an account. This is the only piece of information stored server-side. It is used solely so your contacts can fetch your encryption key.</li>
+    <li><strong>Encrypted message ciphertext</strong> — held on the relay server temporarily, only until delivery is confirmed. Once your device acknowledges receipt, the ciphertext is immediately and permanently deleted from the server.</li>
+  </ul>
+  <p>We do <strong>not</strong> collect your name, phone number, email address, device identifiers, IP address logs, location data, or any metadata beyond what is technically required for message delivery.</p>
+
+  <h2>3. What We Cannot Access</h2>
+  <p>Your private key is generated on your device and never leaves it. All messages are encrypted before transmission using your contact's public key. The relay server receives and forwards only ciphertext — we have no ability to read, analyze, or share your message content.</p>
+
+  <h2>4. Local Storage</h2>
+  <p>Messages stored on your device are encrypted at rest. Decryption occurs in-memory only when you are actively viewing a conversation. No plaintext is ever written to your device's storage.</p>
+
+  <h2>5. Data Sharing</h2>
+  <p>We do not sell, rent, trade, or share your data with any third party. There are no advertising SDKs, analytics services, or crash reporting tools in the application.</p>
+
+  <h2>6. Data Retention</h2>
+  <ul>
+    <li><strong>Server-side messages:</strong> Deleted immediately upon delivery acknowledgement.</li>
+    <li><strong>Your public key:</strong> Retained on the relay server until you delete your account.</li>
+    <li><strong>Local data:</strong> Stored on your device until you delete it or execute an account wipe.</li>
+  </ul>
+
+  <h2>7. Account Deletion — E.L.E.</h2>
+  <p>Tessera includes an Extinction Level Event (E.L.E.) function that performs a complete, irreversible wipe:</p>
+  <ul>
+    <li>All local messages, keys, and user data are deleted from your device.</li>
+    <li>Your public key and all associated records are removed from the relay server.</li>
+    <li>This operation is permanent and cannot be undone.</li>
+  </ul>
+
+  <h2>8. Children's Privacy</h2>
+  <p>Tessera is not directed at children under the age of 13. We do not knowingly collect information from children.</p>
+
+  <h2>9. Changes to This Policy</h2>
+  <p>If this policy changes materially, we will update the effective date at the top of this page. Continued use of the app after changes constitutes acceptance of the revised policy.</p>
+
+  <h2>10. Contact</h2>
+  <p>For any privacy-related questions or data deletion requests, contact: <a href="mailto:polarbehr.designs@gmail.com">polarbehr.designs@gmail.com</a></p>
+
+  <footer>
+    &copy; 2025 CCM Hat &nbsp;·&nbsp; Tessera &nbsp;·&nbsp; com.ccmhat.tessera
+  </footer>
+
+</div>
+</body>
+</html>
