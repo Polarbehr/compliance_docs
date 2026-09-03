@@ -158,11 +158,11 @@ Public Sub ProcessAndDistributeAllData()
     hGangLoc = FindMonarchColumn(rawData, headerRow, totalCols, "Gang Location", claimedCols)
 
     Dim cCust As Long, cDesc As Long, cQty As Long, cLocDate As Long, cLoc As Long, cWorkCenter As Long
-    cCust = FindMonarchDataColumn(rawData, dataRows, hCust, claimedCols, False)
-    cDesc = FindMonarchDataColumn(rawData, dataRows, hDesc, claimedCols, False)
-    cQty = FindMonarchDataColumn(rawData, dataRows, hQty, claimedCols, False)
-    cLocDate = FindMonarchDataColumn(rawData, dataRows, hLastLoc, claimedCols, True)
-    cLoc = FindMonarchDataColumn(rawData, dataRows, hGangLoc, claimedCols, False)
+    cCust = FindMonarchDataColumn(rawData, dataRows, hCust, totalCols, claimedCols, False)
+    cDesc = FindMonarchDataColumn(rawData, dataRows, hDesc, totalCols, claimedCols, False)
+    cQty = FindMonarchDataColumn(rawData, dataRows, hQty, totalCols, claimedCols, False)
+    cLocDate = FindMonarchDataColumn(rawData, dataRows, hLastLoc, totalCols, claimedCols, True)
+    cLoc = FindMonarchDataColumn(rawData, dataRows, hGangLoc, totalCols, claimedCols, False)
     ' Work Center has no header label of its own -- see FindMonarchDenseColumn.
     cWorkCenter = FindMonarchDenseColumn(rawData, dataRows, cLoc, totalCols, claimedCols)
 
@@ -172,7 +172,7 @@ Public Sub ProcessAndDistributeAllData()
     ' just means CleanedData carries a blank column L, not an error.
     Dim hToPerso As Long, cToPerso As Long
     hToPerso = FindMonarchColumn(rawData, headerRow, totalCols, "To Perso", claimedCols)
-    cToPerso = FindMonarchDataColumn(rawData, dataRows, hToPerso, claimedCols, True)
+    cToPerso = FindMonarchDataColumn(rawData, dataRows, hToPerso, totalCols, claimedCols, True)
 
     If cCust = 0 Or cDesc = 0 Or cQty = 0 Or cLocDate = 0 Or cLoc = 0 Or cWorkCenter = 0 Then
         SetHubStatus "ERROR", "Monarch column headings not recognised at " & Format(Now, "yyyy-mm-dd hh:nn")
@@ -479,7 +479,7 @@ End Function
 ' "date-like". This lets a date field (Location Date) find its column
 ' without accidentally locking onto a neighboring text or numeric field
 ' that happens to be well populated too, and vice versa.
-Private Function FindMonarchDataColumn(ByRef rawData As Variant, ByRef dataRows As Object, ByVal headerCol As Long, ByRef claimedCols As Object, ByVal wantDate As Boolean) As Long
+Private Function FindMonarchDataColumn(ByRef rawData As Variant, ByRef dataRows As Object, ByVal headerCol As Long, ByVal totalCols As Long, ByRef claimedCols As Object, ByVal wantDate As Boolean) As Long
     If headerCol = 0 Then Exit Function
     If dataRows.Count = 0 Then Exit Function
 
@@ -489,8 +489,11 @@ Private Function FindMonarchDataColumn(ByRef rawData As Variant, ByRef dataRows 
     Dim c As Long, rKey As Variant, v As Variant, filled As Long
     Dim isDateCell As Boolean, nonBlank As Boolean, score As Double
 
+    ' headerCol +/- 1 can land one column past the end of the sheet (e.g.
+    ' "To Perso" sits in the very last column of the export) -- bounding
+    ' by totalCols here avoids indexing rawData() out of range.
     For c = headerCol - 1 To headerCol + 1
-        If c >= 1 And Not claimedCols.Exists(c) Then
+        If c >= 1 And c <= totalCols And Not claimedCols.Exists(c) Then
             filled = 0
             For Each rKey In dataRows.Keys
                 v = rawData(CLng(rKey), c)
