@@ -70,9 +70,15 @@ header text itself doesn't change. If a header goes missing entirely,
 of silently writing an empty `CleanedData` column — that silent failure
 is exactly what happened this time and took a while to notice.
 
-The "To Perso" column is not captured — the Hub wasn't reading it before,
-and nothing asked for it. It's flagged in the code comments in case it's
-wanted later.
+**"To Perso" is now captured too**, as a new `CleanedData` column L,
+copied through from Monarch as-is (no cleaning/interpretation — it's
+whatever date Monarch has in that field, blank when absent). It's
+appended *after* the existing Week Start (J) and RFID Type (K) columns
+rather than inserted where it sits in the Monarch export, so nothing
+already reading `CleanedData` by column position shifts. It's blank on
+the old-style export (`Full_Monarch_Pull_9.1.1.xls` has no such column
+at all) and on jobs that haven't reached that stage — only about 1 in 5
+job rows had it filled in the sample new export.
 
 I validated the column-detection algorithm in Python against both
 attached export files (`Full_Monarch_Pull_9.1.1.xls` and
@@ -96,7 +102,9 @@ relying on it.
 7. Close the VBA editor and click the **Update Data** button (or run
    `ProcessAndDistributeAllData`), pointed at a folder containing the new
    Monarch export. Confirm `CleanedData` now has Customer, Description,
-   QTY, Location Date, Location, and Work Center filled in again.
+   QTY, Location Date, Location, and Work Center filled in again, and a
+   new **To Perso** column L (blank for jobs that haven't reached that
+   stage — that's expected, not a bug).
 
 ## Files
 

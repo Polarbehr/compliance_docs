@@ -1,7 +1,7 @@
 Option Explicit
 
 ' =============================================================================
-' PLI HUB WORKBOOK -- Module4 (v51)
+' PLI HUB WORKBOOK -- Module4 (v52)
 ' Cleaning engine only. Reads the shared Monarch drop folder, applies the
 ' business rules (rate math REMOVED 2026-08.12 -- lives in the AVL Dashboard;
 ' LAMBDAs), maintains Parameters (machine rates), and exposes CleanedData +
@@ -23,6 +23,18 @@ Option Explicit
 ' EnsurePreferenceRows) written REFRESHING at the start of Update Data and
 ' READY <timestamp> at the end. Every satellite pull checks this flag
 ' first and warns rather than reading a mid-rebuild CleanedData table.
+'
+' 2026-09.03 (v52): Monarch's export changed its column layout again and
+' broke the old hardcoded column numbers -- Customer/Description/QTY/
+' Location Date/Location/Work Center all came back blank. Column lookup
+' is now header-text-driven (see FindMonarchColumn / FindMonarchDataColumn
+' / FindMonarchDenseColumn below ProcessAndDistributeAllData) instead of
+' fixed positions, and fails loudly if a header can't be found. Also picks
+' up the new "To Perso" field Monarch's export started including, as
+' CleanedData column L -- appended at the end so it doesn't shift Week
+' Start (J) or RFID Type (K) for anything already reading those by
+' position. Blank on exports that don't have the column (older layouts)
+' or jobs that haven't reached that stage.
 ' =============================================================================
 
 Private Const THEME_ACCENT2 As Long = 6
@@ -154,6 +166,14 @@ Public Sub ProcessAndDistributeAllData()
     ' Work Center has no header label of its own -- see FindMonarchDenseColumn.
     cWorkCenter = FindMonarchDenseColumn(rawData, dataRows, cLoc, totalCols, claimedCols)
 
+    ' To Perso is OPTIONAL -- Monarch only started including it in the
+    ' 2026-09.03 export, older layouts don't have it at all, and it isn't
+    ' filled for every job even when the column exists. Missing/unfound
+    ' just means CleanedData carries a blank column L, not an error.
+    Dim hToPerso As Long, cToPerso As Long
+    hToPerso = FindMonarchColumn(rawData, headerRow, totalCols, "To Perso", claimedCols)
+    cToPerso = FindMonarchDataColumn(rawData, dataRows, hToPerso, claimedCols, True)
+
     If cCust = 0 Or cDesc = 0 Or cQty = 0 Or cLocDate = 0 Or cLoc = 0 Or cWorkCenter = 0 Then
         SetHubStatus "ERROR", "Monarch column headings not recognised at " & Format(Now, "yyyy-mm-dd hh:nn")
         MsgBox "Could not confidently locate every Monarch column (Customer Name / Job Description / Qnty / Last Location / Gang Location / Work Center) in this export. The report layout may have changed more than this Hub can self-heal -- open the source file, compare its column headings to what ProcessAndDistributeAllData (Module4) expects, and update the code if needed.", vbCritical, "Update Data Failed"
@@ -184,8 +204,16 @@ Public Sub ProcessAndDistributeAllData()
     Dim colWeekStart As Long, colRfid As Long
     colWeekStart = keepCols.Count + 1
     colRfid = keepCols.Count + 2
+
+    ' 2026-09.03: CleanedData gains a 12th column, To Perso -- Monarch's
+    ' own field, copied through as-is (blank on exports/jobs that don't
+    ' have it). Appended after RFID Type so Week Start/RFID Type keep
+    ' their existing column letters for anything already reading them by
+    ' position.
+    Dim colToPerso As Long
+    colToPerso = keepCols.Count + 3
     Dim totalOutCols As Long
-    totalOutCols = colRfid
+    totalOutCols = colToPerso
 
     ' -------------------------------------------------------------
     ' 3. TRANSFORM DATA IN MEMORY
@@ -201,6 +229,7 @@ Public Sub ProcessAndDistributeAllData()
     Next colKey
     outputData(1, colWeekStart) = "Week Start"
     outputData(1, colRfid) = "RFID Type"
+    outputData(1, colToPerso) = "To Perso"
 
     Dim deleteKeywords As Variant
     deleteKeywords = Array("production", "total", "finished", "open", "jobs", "work", "department", "report", "column", "ship")
@@ -216,6 +245,7 @@ Public Sub ProcessAndDistributeAllData()
     Dim kw As Variant, hasMatch As Boolean
     Dim valLocDate As Variant, valLoc As Variant
     Dim refDate As Variant, weekStartVal As Variant
+    Dim toPersoVal As Variant
 
     For r = 2 To totalRows
         col1Val = rawData(r, cShip)
@@ -284,6 +314,17 @@ Public Sub ProcessAndDistributeAllData()
                 ' EMPTY cell rather than a placeholder, so satellites can
                 ' filter on blank.
                 outputData(outR, colRfid) = ClassifyRfidType(CStr(outputData(outR, 5)), rfidTokens)
+
+                If cToPerso > 0 And cToPerso <= totalCols Then
+                    toPersoVal = rawData(r, cToPerso)
+                    If IsDate(toPersoVal) And Not IsEmpty(toPersoVal) Then
+                        outputData(outR, colToPerso) = CDate(toPersoVal)
+                    Else
+                        outputData(outR, colToPerso) = Empty
+                    End If
+                Else
+                    outputData(outR, colToPerso) = Empty
+                End If
             End If
         End If
     Next r
@@ -703,7 +744,10 @@ Private Sub BuildFormulasSheet()
         Array("Effective QTY / Job Hours / Capacity", "AVL Production Dashboard", "Removed from the Hub at the user's direction. The Dashboard computes all three from ITS OWN Parameters tab after pulling CleanedData. Maintain machine rates THERE, not here -- the Hub no longer has a Parameters sheet."), _
         Array("", "", ""), _
         Array("RFID TYPE (column K, 2026-08.13)", "", ""), _
-        Array("RFID Type", "longest matching token in Description", "Hub scans each Description for the tokens listed under RFID Technologies on Preferences and writes the match here; blank when nothing matches. Where tokens nest, the longest wins (Ving 1K beats 1K). Hub only CREATES this column -- charts, slicers and totals are built by the satellite workbooks.") _
+        Array("RFID Type", "longest matching token in Description", "Hub scans each Description for the tokens listed under RFID Technologies on Preferences and writes the match here; blank when nothing matches. Where tokens nest, the longest wins (Ving 1K beats 1K). Hub only CREATES this column -- charts, slicers and totals are built by the satellite workbooks."), _
+        Array("", "", ""), _
+        Array("TO PERSO (column L, 2026-09.03)", "", ""), _
+        Array("To Perso", "copied as-is from Monarch's own 'To Perso' field", "Blank on exports that don't include the column (older Monarch layouts) or on jobs that haven't reached that stage yet. Hub only carries this column through -- no cleaning or interpretation applied.") _
         )
 
     Dim i As Long, r As Long
@@ -1335,6 +1379,8 @@ Private Sub AddJobHoursTable(ByRef ws As Worksheet, ByVal rowsCount As Long, ByV
     ' Capacity Load) are GONE -- rate math moved to the AVL Production
     ' Dashboard's own Parameters tab at the user's direction ("Remove
     ' parameters from HUB and have the AVL Dashboard base its calculations
-    ' on the parameters tab of itself"). CleanedData now carries columns
-    ' A:J only; this sub just wraps them in a filterable table.
+    ' on the parameters tab of itself"). colsCount is passed in from
+    ' ProcessAndDistributeAllData (totalOutCols) rather than assumed here,
+    ' so this sub always wraps whatever columns CleanedData actually has
+    ' (A:L as of the 2026-09.03 To Perso addition) in a filterable table.
 End Sub
