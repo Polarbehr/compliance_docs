@@ -36,10 +36,16 @@ where the data starts, and were left alone.
 
 ## Current column layout
 
-**A** To Perso · **B** Ship Date · **C** Job ID · **D** Customer Name ·
+**A** Ship Date · **B** To Perso · **C** Job ID · **D** Customer Name ·
 **E** Description · **F** QTY · **G** Location · **H** Machine ·
 **I** Cards · **J** Rdy · **K** Week Start · (buffer) **L** ·
 **M** onward: the capacity table.
+
+(2026-09-03, later same day: Ship Date and To Perso were swapped back —
+Ship Date is A, To Perso is B. Only those two moved; everything from Job
+ID on is unchanged from the layout above. The spacer-row check in
+`ApplyTracieConditionalFormatting` moved back to `$A2`, matching Ship
+Date's reliably-filled column, instead of `$B2`.)
 
 ## One-time transition note
 
