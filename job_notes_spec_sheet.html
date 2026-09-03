@@ -66,6 +66,13 @@
   }
   .brand h1{font-size:22px;letter-spacing:.5px;font-weight:800;}
   .brand .sub{font-size:12.5px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:2px;}
+  .help-link{
+    color:#fff; text-decoration:none; font-size:13px; font-weight:700;
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+    border-radius:999px; padding:9px 16px; white-space:nowrap;
+    transition:background .15s;
+  }
+  .help-link:hover{background:rgba(255,255,255,.18);}
   .status-chip{
     background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
     border-radius:999px; padding:10px 18px; min-width:220px;
@@ -184,6 +191,25 @@
   }
   #toast.show{transform:translateY(0);opacity:1;}
 
+  /* draft mismatch warning */
+  .draft-warning{
+    display:flex; gap:14px; align-items:flex-start;
+    background:#fff6e0; border:1.5px solid #f2b73a; border-radius:var(--radius);
+    padding:16px 18px; margin:0 0 20px; box-shadow:var(--shadow);
+  }
+  .draft-warning[hidden]{display:none;}
+  .draft-warning .dw-icon{font-size:20px;flex:none;line-height:1;}
+  .draft-warning .dw-body{flex:1;}
+  .draft-warning .dw-body strong{font-size:13.5px;color:#7a4a00;}
+  .draft-warning ul{margin:8px 0 4px 18px;}
+  .draft-warning li{font-size:12.5px;color:#5c3d0a;margin-bottom:4px;line-height:1.5;}
+  .draft-warning .hint{font-size:12px;color:#8a6a2e;margin-top:4px;}
+  .draft-warning > button{
+    background:none;border:none;font-size:15px;cursor:pointer;color:#8a6a2e;flex:none;
+    padding:2px 4px;line-height:1;
+  }
+  .draft-warning > button:hover{color:#5c3d0a;}
+
   /* icon colors */
   .ic.c1{background:var(--cyan);} .ic.c2{background:var(--magenta);} .ic.c3{background:var(--orange);}
   .ic.c4{background:#7c3aed;} .ic.c5{background:#0ea5a4;} .ic.c6{background:var(--key);}
@@ -214,15 +240,29 @@
         <div class="sub">Job Notes &amp; Customer Specification Intake</div>
       </div>
     </div>
-    <div class="status-chip">
-      <div class="label">Form Completion</div>
-      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-      <div class="progress-num" id="progressNum">0%</div>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <a class="help-link" href="onboarding_guide.html">❓ How to Use This Form</a>
+      <div class="status-chip">
+        <div class="label">Form Completion</div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-num" id="progressNum">0%</div>
+      </div>
     </div>
   </div>
 </header>
 
 <div class="shell">
+
+  <div class="draft-warning" id="draftWarning" hidden>
+    <div class="dw-icon">⚠️</div>
+    <div class="dw-body">
+      <strong>Some values from your saved draft no longer match current dropdown options</strong>
+      <ul id="draftWarningList"></ul>
+      <p class="hint">This happens when an option was renamed or removed since the draft was saved. Everything else loaded normally.</p>
+    </div>
+    <button type="button" id="draftWarningClose" aria-label="Dismiss">✕</button>
+  </div>
+
   <div class="layout">
 
     <nav class="jump" id="jumpNav">
@@ -624,15 +664,42 @@ var DROPDOWN_OPTIONS = {
     return data;
   }
 
+  // Loads saved data into the form. Returns a list of {label, saved} for any
+  // SELECT field whose saved value no longer matches a current <option> —
+  // this happens when an option was renamed or removed after the draft was
+  // saved (adding new options never causes this; old values still match).
   function applyData(data){
+    var mismatches = [];
     allFieldEls().forEach(function(el){
       var f = el.getAttribute('data-field');
-      if (data.hasOwnProperty(f)) setValue(el, data[f]);
+      if (!data.hasOwnProperty(f)) return;
+      var savedVal = data[f];
+      setValue(el, savedVal);
+      if (el.tagName === 'SELECT' && savedVal && getValue(el) !== savedVal) {
+        mismatches.push({ label: el.getAttribute('data-label'), saved: savedVal });
+      }
     });
     onFieldChange('silkScreen');
     onFieldChange('holePunch');
     updateProgress();
+    return mismatches;
   }
+
+  function showDraftWarning(mismatches){
+    var list = document.getElementById('draftWarningList');
+    list.innerHTML = '';
+    mismatches.forEach(function(m){
+      var li = document.createElement('li');
+      li.innerHTML = '<strong>' + m.label + '</strong> was set to "' + m.saved + '" — that option no longer exists, so this field was cleared. Please re-select it.';
+      list.appendChild(li);
+    });
+    document.getElementById('draftWarning').hidden = false;
+  }
+
+  function hideDraftWarning(){
+    document.getElementById('draftWarning').hidden = true;
+  }
+  document.getElementById('draftWarningClose').addEventListener('click', hideDraftWarning);
 
   function toast(msg){
     var t = document.getElementById('toast');
@@ -651,12 +718,22 @@ var DROPDOWN_OPTIONS = {
   document.getElementById('btnLoad').addEventListener('click', function(){
     var raw = localStorage.getItem(STORAGE_KEY);
     if (!raw){ toast('No saved draft found'); return; }
-    try{ applyData(JSON.parse(raw)); toast('Draft loaded'); }
+    try{
+      var mismatches = applyData(JSON.parse(raw));
+      if (mismatches.length) {
+        showDraftWarning(mismatches);
+        toast('Draft loaded — ' + mismatches.length + ' field(s) need review');
+      } else {
+        hideDraftWarning();
+        toast('Draft loaded');
+      }
+    }
     catch(e){ toast('Could not read saved draft'); }
   });
 
   document.getElementById('btnClear').addEventListener('click', function(){
     if (!confirm('Clear all fields on this form? This cannot be undone.')) return;
+    hideDraftWarning();
     allFieldEls().forEach(function(el){ setValue(el, ''); });
     onFieldChange('silkScreen');
     onFieldChange('holePunch');
