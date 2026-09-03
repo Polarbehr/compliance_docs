@@ -1,7 +1,7 @@
 Option Explicit
 
 ' =============================================================================
-' PLI PERSO WORKBOOK -- Module1 (v3.8, 2026-09-03)
+' PLI PERSO WORKBOOK -- Module1 (v3.9, 2026-09-03)
 '
 ' The version is ALSO held in the MODULE_VERSION constant below and printed at
 ' the end of every Update Data run, so the build a workbook is actually running
@@ -13,6 +13,14 @@ Option Explicit
 '   ---------------------------------------------------------------------
 '   REVISION HISTORY
 '   ---------------------------------------------------------------------
+'   v3.9  2026-09-03
+'       * Ship Date and To Perso swapped back: Ship Date is column A again,
+'         To Perso is B. Only those two columns' positions changed --
+'         everything from Job ID (C) onward, the K-purge column, and the
+'         capacity table stayed exactly where v3.8 put them. The spacer-row
+'         detection in ApplyTracieConditionalFormatting ($A2<>"" /
+'         $A2="") moved from $B2 back to $A2, since Ship Date -- reliably
+'         filled, unlike To Perso -- is column A again.
 '   v3.8  2026-09-03
 '       * Hub started shipping a 12th CleanedData column, To Perso (column
 '         L). Tracie gains it as column A, before Ship Date -- every other
@@ -221,7 +229,8 @@ Private Const STALE_HUB_HOURS As Double = 12#
 '         L1:AD500 migration narrowed off the user's top strip
 '   v3.8  + To Perso column inserted before Ship Date; every column
 '         reference after it shifted right by one
-Private Const MODULE_VERSION As String = "v3.8"
+'   v3.9  Ship Date and To Perso swapped back (A/B), nothing else moved
+Private Const MODULE_VERSION As String = "v3.9"
 
 ' -----------------------------------------------------------------------------
 ' UPDATE DATA BUTTON -- second caption line and state colour (v3).
@@ -879,7 +888,7 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
     On Error GoTo 0
 
     Dim headers As Variant
-    headers = Array("To Perso", "Ship Date", "Job ID", "Customer Name", "Description", "QTY", _
+    headers = Array("Ship Date", "To Perso", "Job ID", "Customer Name", "Description", "QTY", _
                     "Location", "Machine", "Cards", "Rdy", "Week Start")
     Dim c As Long
     For c = 0 To UBound(headers)
@@ -926,16 +935,16 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
         End If
         prevMach = matchMachine(i)
 
+        sd = rawData(rowIdx, COL_SHIP)
+        ws.Cells(outRow, 1).Value = sd
+
         ' To Perso comes straight from Hub's CleanedData column L. Blank on
         ' a Hub that hasn't been updated yet (fewer than 12 columns) or on
         ' a job that hasn't reached that stage -- guarded the same way
         ' Press guards its own read of this column.
         If UBound(rawData, 2) >= COL_TOPERSO Then
-            ws.Cells(outRow, 1).Value = rawData(rowIdx, COL_TOPERSO)
+            ws.Cells(outRow, 2).Value = rawData(rowIdx, COL_TOPERSO)
         End If
-
-        sd = rawData(rowIdx, COL_SHIP)
-        ws.Cells(outRow, 2).Value = sd
         ws.Cells(outRow, 3).Value = rawData(rowIdx, COL_JOBID)
         ws.Cells(outRow, 4).Value = rawData(rowIdx, COL_CUSTOMER)
         ws.Cells(outRow, 5).Value = rawData(rowIdx, COL_DESC)
@@ -1053,11 +1062,10 @@ End Function
 '      2026-09.03 To Perso column), formula
 '      =ISNUMBER(SEARCH("<display>",$H2)) (was $G2), fill = that roster
 '      row's Row Color cell fill. No fill on the roster cell = no rule.
-'   2. Odd-week BOLD banding: =AND($B2<>"",ISODD(WEEKNUM($K2,21))) (was
-'      $A2/$J2) -- alternate Ship-Date weeks read bold, same as the
-'      original.
-'   3. Hide Cards/Rdy text on non-job rows: I:J white font when $B2=""
-'      (was H:I / $A2).
+'   2. Odd-week BOLD banding: =AND($A2<>"",ISODD(WEEKNUM($K2,21))) --
+'      alternate Ship-Date weeks read bold, same as the original ($A2 is
+'      Ship Date; To Perso swapped from A to B on 2026-09.03).
+'   3. Hide Cards/Rdy text on non-job rows: I:J white font when $A2="".
 ' Rule 1 is added FIRST so machine fills sit above later rules in priority,
 ' mirroring the original rule order.
 ' =============================================================================
@@ -1104,19 +1112,22 @@ Private Sub ApplyTracieConditionalFormatting(ByRef ws As Worksheet, ByVal lastRo
     ' formatting lets the whole style follow it. Safe here because the tab is
     ' rebuilt from scratch on every run, which is the very reason the ORIGINAL
     ' workbook's CF rules went stale.
-    ' $B2/$K2 (was $A2/$J2 before the 2026-09.03 To Perso column) are Ship
-    ' Date and Week Start -- $B2<>"" is still "this is a real job row, not a
-    ' spacer" now that column A is To Perso, which is blank far more often.
+    ' $A2/$K2 are Ship Date and Week Start -- $A2<>"" is "this is a real job
+    ' row, not a spacer". Ship Date reclaimed column A when To Perso swapped
+    ' back to B (2026-09.03), so this is the same reference the sheet used
+    ' before To Perso existed at all -- Ship Date is filled far more
+    ' consistently than To Perso, so keying the spacer check on it (rather
+    ' than whichever column happens to be A) is deliberate, not incidental.
     Dim fc As Object
 
     Set fc = dataRange.FormatConditions.Add(Type:=xlExpression, _
-        Formula1:="=AND($B2<>"""",ISODD(WEEKNUM($K2,21)))")
+        Formula1:="=AND($A2<>"""",ISODD(WEEKNUM($K2,21)))")
     fc.Font.Bold = True
     fc.StopIfTrue = False
 
     Dim checkRange As Range
     Set checkRange = ws.Range(ws.Cells(2, 9), ws.Cells(lastRow, 10))
-    Set fc = checkRange.FormatConditions.Add(Type:=xlExpression, Formula1:="=$B2=""""")
+    Set fc = checkRange.FormatConditions.Add(Type:=xlExpression, Formula1:="=$A2=""""")
     fc.Font.Color = RGB(255, 255, 255)
     fc.StopIfTrue = False
 End Sub
