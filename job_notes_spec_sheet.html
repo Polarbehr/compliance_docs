@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Press Job Spec Sheet — Job Notes</title>
+<style>
+  :root{
+    --cyan:#00AEEF;
+    --magenta:#EC008C;
+    --yellow:#FFD500;
+    --key:#171417;
+    --orange:#FF6A13;
+    --ink:#1a1a1a;
+    --paper:#faf9f6;
+    --card:#ffffff;
+    --line:#e7e2da;
+    --muted:#6b6560;
+    --good:#12b76a;
+    --bad:#e11d48;
+    --radius:14px;
+    --shadow:0 6px 20px rgba(23,20,23,.08);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(1200px 400px at 10% -10%, rgba(0,174,239,.08), transparent),
+      radial-gradient(1200px 400px at 90% 0%, rgba(236,0,140,.08), transparent),
+      var(--paper);
+    color:var(--ink);
+    padding-bottom:80px;
+  }
+
+  /* ---------- Header ---------- */
+  .cmyk-bar{height:8px;display:flex;}
+  .cmyk-bar span{flex:1;}
+  .cmyk-bar .c{background:var(--cyan);}
+  .cmyk-bar .m{background:var(--magenta);}
+  .cmyk-bar .y{background:var(--yellow);}
+  .cmyk-bar .k{background:var(--key);}
+
+  header.top{
+    background:linear-gradient(120deg,#141014 0%,#221a22 55%,#171217 100%);
+    color:#fff;
+    padding:28px 24px 24px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.top::after{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(320px 320px at 88% -30%, rgba(0,174,239,.35), transparent 60%),
+      radial-gradient(320px 320px at 100% 120%, rgba(236,0,140,.30), transparent 60%),
+      radial-gradient(260px 260px at 40% 160%, rgba(255,213,0,.18), transparent 60%);
+    pointer-events:none;
+  }
+  .top-inner{max-width:1180px;margin:0 auto;position:relative;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:14px;}
+  .brand .mark{
+    width:52px;height:52px;border-radius:12px;
+    background:conic-gradient(from 140deg, var(--cyan), var(--magenta), var(--yellow), var(--cyan));
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px; box-shadow:0 4px 16px rgba(0,0,0,.4);
+  }
+  .brand h1{font-size:22px;letter-spacing:.5px;font-weight:800;}
+  .brand .sub{font-size:12.5px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:2px;}
+  .status-chip{
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
+    border-radius:999px; padding:10px 18px; min-width:220px;
+  }
+  .status-chip .label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px;}
+  .progress-track{height:8px;border-radius:999px;background:rgba(255,255,255,.15);overflow:hidden;}
+  .progress-fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--yellow));transition:width .3s ease;}
+  .progress-num{font-size:13px;font-weight:700;margin-top:6px;text-align:right;}
+
+  /* ---------- Layout ---------- */
+  .shell{max-width:1180px;margin:0 auto;padding:24px;}
+  .layout{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start;}
+  @media (max-width:860px){.layout{grid-template-columns:1fr;} nav.jump{position:static;order:2;}}
+
+  nav.jump{
+    position:sticky; top:16px;
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px; box-shadow:var(--shadow);
+  }
+  nav.jump h3{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding:0 6px;}
+  nav.jump a{
+    display:flex; align-items:center; gap:8px;
+    text-decoration:none; color:var(--ink); font-size:13.5px; font-weight:600;
+    padding:8px 8px; border-radius:8px; margin-bottom:2px;
+  }
+  nav.jump a:hover{background:#f4f1ea;}
+  nav.jump a .dot{width:8px;height:8px;border-radius:50%;background:var(--line);flex:none;}
+  nav.jump a.done .dot{background:var(--good);}
+
+  main{display:flex;flex-direction:column;gap:20px;}
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); overflow:hidden; scroll-margin-top:16px;
+  }
+  .card .head{
+    display:flex; align-items:center; gap:12px;
+    padding:16px 20px; border-bottom:1px solid var(--line);
+    background:linear-gradient(90deg, rgba(0,174,239,.06), rgba(236,0,140,.05));
+  }
+  .card .head .ic{
+    width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-size:19px; color:#fff; flex:none;
+  }
+  .card .head h2{font-size:16px;font-weight:800;}
+  .card .head p{font-size:12.5px;color:var(--muted);margin-top:1px;}
+  .card .body{padding:20px;}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px 20px;}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  @media (max-width:640px){.grid,.grid.cols-3{grid-template-columns:1fr;}}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field.span-2{grid-column:span 2;}
+  @media (max-width:640px){.field.span-2{grid-column:span 1;}}
+  .field label{font-size:12.5px;font-weight:700;color:#3a3530;display:flex;justify-content:space-between;}
+  .field label .req{color:var(--magenta);font-weight:800;}
+  .field input[type="text"],
+  .field input[type="date"],
+  .field select,
+  .field textarea{
+    border:1.5px solid var(--line); border-radius:9px; padding:10px 12px;
+    font-size:14px; font-family:inherit; color:var(--ink); background:#fffefc;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .field textarea{resize:vertical;min-height:70px;}
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none; border-color:var(--cyan); box-shadow:0 0 0 3px rgba(0,174,239,.15);
+  }
+  .field input.invalid, .field select.invalid{border-color:var(--bad); box-shadow:0 0 0 3px rgba(225,29,72,.12);}
+  .hint{font-size:11.5px;color:var(--muted);}
+
+  /* Yes/No pill toggle */
+  .yn{display:flex;gap:8px;}
+  .yn button{
+    flex:1; padding:9px 10px; border-radius:9px; border:1.5px solid var(--line);
+    background:#fffefc; font-weight:700; font-size:13px; cursor:pointer; color:var(--muted);
+    transition:all .15s;
+  }
+  .yn button.yes.active{background:rgba(18,183,106,.12); border-color:var(--good); color:var(--good);}
+  .yn button.no.active{background:rgba(225,29,72,.10); border-color:var(--bad); color:var(--bad);}
+
+  .subpanel{
+    margin-top:14px; padding:14px; border-radius:10px;
+    background:#fbf7ef; border:1px dashed #e3c98a;
+    display:none;
+  }
+  .subpanel.open{display:block;}
+
+  /* ---------- Footer action bar ---------- */
+  .actionbar{
+    position:fixed; left:0; right:0; bottom:0; z-index:20;
+    background:#171417; border-top:3px solid; border-image:linear-gradient(90deg,var(--cyan),var(--magenta),var(--yellow)) 1;
+    padding:12px 24px;
+  }
+  .actionbar-inner{max-width:1180px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;}
+  button.act{
+    border:none; border-radius:9px; padding:11px 18px; font-weight:800; font-size:13.5px;
+    cursor:pointer; display:flex; align-items:center; gap:8px; letter-spacing:.2px;
+  }
+  .act.primary{background:linear-gradient(90deg,var(--cyan),var(--magenta));color:#fff;}
+  .act.secondary{background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.2);}
+  .act.warn{background:transparent;color:#ff9090;border:1px solid rgba(255,144,144,.4);}
+  button.act:hover{filter:brightness(1.08);}
+  .savemsg{font-size:12px;color:#9ee6b8;font-weight:700;min-width:140px;}
+
+  /* toast */
+  #toast{
+    position:fixed; top:16px; right:16px; z-index:50;
+    background:#171417;color:#fff;padding:12px 18px;border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,.3); font-size:13.5px; font-weight:600;
+    display:flex;align-items:center;gap:8px; transform:translateY(-12px); opacity:0;
+    transition:all .25s; pointer-events:none; border-left:4px solid var(--good);
+  }
+  #toast.show{transform:translateY(0);opacity:1;}
+
+  /* icon colors */
+  .ic.c1{background:var(--cyan);} .ic.c2{background:var(--magenta);} .ic.c3{background:var(--orange);}
+  .ic.c4{background:#7c3aed;} .ic.c5{background:#0ea5a4;} .ic.c6{background:var(--key);}
+  .ic.c7{background:#d946ef;} .ic.c8{background:#f59e0b;} .ic.c9{background:var(--good);}
+  .ic.c10{background:#334155;}
+
+  @media print{
+    header.top, nav.jump, .actionbar, #toast{display:none !important;}
+    body{padding:0;background:#fff;}
+    .card{box-shadow:none; border:1px solid #ccc; break-inside:avoid; margin-bottom:10px;}
+    .layout{display:block;}
+    .field input,.field select,.field textarea{border:1px solid #999; background:#fff;}
+    .yn button{display:none;}
+    .yn::after{content:attr(data-print-val); font-weight:700;}
+  }
+</style>
+</head>
+<body>
+
+<div class="cmyk-bar"><span class="c"></span><span class="m"></span><span class="y"></span><span class="k"></span></div>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="mark">🖨️</div>
+      <div>
+        <h1>Press Job Spec Sheet</h1>
+        <div class="sub">Job Notes &amp; Customer Specification Intake</div>
+      </div>
+    </div>
+    <div class="status-chip">
+      <div class="label">Form Completion</div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-num" id="progressNum">0%</div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <div class="layout">
+
+    <nav class="jump" id="jumpNav">
+      <h3>Job Sections</h3>
+      <a href="#sec-job"><span class="dot"></span> Job Info</a>
+      <a href="#sec-proof"><span class="dot"></span> Proof &amp; Sign-Off</a>
+      <a href="#sec-callouts"><span class="dot"></span> Job Callouts</a>
+      <a href="#sec-art"><span class="dot"></span> Artwork</a>
+      <a href="#sec-tooling"><span class="dot"></span> Tooling &amp; Die</a>
+      <a href="#sec-stock"><span class="dot"></span> Stock &amp; Substrate</a>
+      <a href="#sec-press"><span class="dot"></span> Press Specs</a>
+      <a href="#sec-silk"><span class="dot"></span> Silk Screen</a>
+      <a href="#sec-finish"><span class="dot"></span> Finishing &amp; Packaging</a>
+      <a href="#sec-ship"><span class="dot"></span> Overs / Unders / Ship</a>
+      <a href="#sec-notes"><span class="dot"></span> Special Instructions</a>
+    </nav>
+
+    <main>
+
+      <!-- JOB INFO -->
+      <section class="card" id="sec-job">
+        <div class="head"><div class="ic c1">🏷️</div><div><h2>Job Information</h2><p>Basic identifiers for this job — not on the original sheet, added for tracking.</p></div></div>
+        <div class="body">
+          <div class="grid cols-3">
+            <div class="field"><label>Customer Name</label><input type="text" data-field="customerName" data-label="Customer Name" placeholder="e.g. Acme Beverage Co."></div>
+            <div class="field"><label>Job / PO Number</label><input type="text" data-field="jobNumber" data-label="Job / PO Number" placeholder="e.g. PO-48213"></div>
+            <div class="field"><label>Sales Rep</label><input type="text" data-field="salesRep" data-label="Sales Rep" placeholder="e.g. J. Rivera"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROOF -->
+      <section class="card" id="sec-proof">
+        <div class="head"><div class="ic c2">✅</div><div><h2>Proof &amp; Sign-Off</h2><p>How the proof is generated and who approves it.</p></div></div>
+        <div class="body">
+          <div class="grid">
+            <div class="field">
+              <label>Proof Options <span class="req">*</span></label>
+              <select data-field="proofOptions" data-label="Proof Options" data-options="proofOptions" required></select>
+            </div>
+            <div class="field">
+              <label>Proof to Attention</label>
+              <input type="text" data-field="proofAttention" data-label="Proof to Attention" placeholder="Name / email of approver">
+            </div>
+            <div class="field">
+              <label>Sign Off Date</label>
+              <input type="date" data-field="signOffDate" data-label="Sign Off Date">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CALLOUTS -->
+      <section class="card" id="sec-callouts">
+        <div class="head"><div class="ic c3">📌</div><div><h2>Job Callouts</h2><p>Standard yes/no callouts sales needs to flag for prepress.</p></div></div>
+        <div class="body">
+          <div class="grid cols-3">
+            <div class="field"><label>PLI on Back</label><div class="yn" data-field="pliOnBack" data-label="PLI on Back"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+            <div class="field"><label>Arrow</label><div class="yn" data-field="arrow" data-label="Arrow"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+            <div class="field"><label>P# / C#</label><div class="yn" data-field="pcNumber" data-label="P#/C#"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ARTWORK -->
+      <section class="card" id="sec-art">
+        <div class="head"><div class="ic c4">🎨</div><div><h2>Artwork</h2><p>Is front/back artwork brand new or carried over from a previous run?</p></div></div>
+        <div class="body">
+          <div class="grid">
+            <div class="field">
+              <label>Front Art</label>
+              <select data-field="frontArt" data-label="Front Art" data-options="artStatus"></select>
+            </div>
+            <div class="field">
+              <label>Back Art</label>
+              <select data-field="backArt" data-label="Back Art" data-options="artStatus"></select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TOOLING -->
+      <section class="card" id="sec-tooling">
+        <div class="head"><div class="ic c5">🔩</div><div><h2>Tooling &amp; Die</h2><p>Mechanical specs for the die and lock system.</p></div></div>
+        <div class="body">
+          <div class="grid cols-3">
+            <div class="field"><label>Lock System</label><input type="text" data-field="lockSystem" data-label="Lock System"></div>
+            <div class="field"><label>Lock System Tech</label><input type="text" data-field="lockSystemTech" data-label="Lock System Tech"></div>
+            <div class="field"><label>Die #</label><input type="text" data-field="dieNumber" data-label="Die #"></div>
+            <div class="field"><label>Size</label><input type="text" data-field="size" data-label="Size" placeholder="e.g. 12oz, 4.5 x 8 in"></div>
+            <div class="field"><label>Thickness</label><input type="text" data-field="thickness" data-label="Thickness" placeholder="e.g. .014&quot;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STOCK -->
+      <section class="card" id="sec-stock">
+        <div class="head"><div class="ic c6">📄</div><div><h2>Stock &amp; Substrate</h2><p>Material and color of the substrate being printed on.</p></div></div>
+        <div class="body">
+          <div class="grid">
+            <div class="field"><label>Stock</label><input type="text" data-field="stock" data-label="Stock"></div>
+            <div class="field"><label>Stock Color</label><input type="text" data-field="stockColor" data-label="Stock Color"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRESS SPECS -->
+      <section class="card" id="sec-press">
+        <div class="head"><div class="ic c2">🖨️</div><div><h2>Press Specs</h2><p>Color targets, finish, and bleed requirements for the press.</p></div></div>
+        <div class="body">
+          <div class="grid">
+            <div class="field span-2">
+              <label>Press Target</label>
+              <select data-field="pressTarget" data-label="Press Target" data-options="pressTarget"></select>
+            </div>
+            <div class="field">
+              <label>Press Front Finish</label>
+              <select data-field="pressFrontFinish" data-label="Press Front Finish" data-options="pressFinish"></select>
+            </div>
+            <div class="field">
+              <label>Press Back Finish</label>
+              <select data-field="pressBackFinish" data-label="Press Back Finish" data-options="pressFinish"></select>
+            </div>
+            <div class="field"><label>Front Color</label><input type="text" data-field="frontColor" data-label="Front Color" placeholder="# of colors / PMS codes"></div>
+            <div class="field"><label>Back Color</label><input type="text" data-field="backColor" data-label="Back Color" placeholder="# of colors / PMS codes"></div>
+            <div class="field span-2">
+              <label>Bleeds</label>
+              <select data-field="bleeds" data-label="Bleeds" data-options="bleeds"></select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SILK SCREEN -->
+      <section class="card" id="sec-silk">
+        <div class="head"><div class="ic c7">🧵</div><div><h2>Silk Screen</h2><p>Only applies when this job requires a silk screen pass.</p></div></div>
+        <div class="body">
+          <div class="grid">
+            <div class="field"><label>Silk Screen</label><div class="yn" data-field="silkScreen" data-label="Silk Screen"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+          </div>
+          <div class="subpanel" id="silkPanel">
+            <div class="grid">
+              <div class="field">
+                <label>Silk Screen Target</label>
+                <select data-field="silkScreenTarget" data-label="Silk Screen Target" data-options="silkScreenTarget"></select>
+              </div>
+              <div class="field">
+                <label>Screen Type</label>
+                <select data-field="screenType" data-label="Screen Type" data-options="screenType"></select>
+              </div>
+              <div class="field span-2">
+                <label>Screen Effect — Details</label>
+                <textarea data-field="screenEffect" data-label="Screen Effect" placeholder="Describe the screen effect (e.g. spot gloss over matte, textured, metallic, etc.)"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FINISHING -->
+      <section class="card" id="sec-finish">
+        <div class="head"><div class="ic c8">📦</div><div><h2>Finishing &amp; Packaging</h2><p>Post-press operations and how the job ships out.</p></div></div>
+        <div class="body">
+          <div class="grid">
+            <div class="field"><label>Hole Punch</label><div class="yn" data-field="holePunch" data-label="Hole Punch"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+            <div class="field" id="holePunchDetailsField" style="display:none;"><label>Hole Punch — Details</label><input type="text" data-field="holePunchDetails" data-label="Hole Punch Details" placeholder="Location, size, quantity"></div>
+          </div>
+          <div class="grid" style="margin-top:16px;">
+            <div class="field"><label>Shrink Wrap Packs</label><input type="text" data-field="shrinkWrapPacks" data-label="Shrink Wrap Packs" placeholder="e.g. 250/pack"></div>
+            <div class="field"><label>Sleeve</label><input type="text" data-field="sleeve" data-label="Sleeve"></div>
+            <div class="field"><label>Sleeve Labels</label><input type="text" data-field="sleeveLabels" data-label="Sleeve Labels"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHIP / TOLERANCE -->
+      <section class="card" id="sec-ship">
+        <div class="head"><div class="ic c9">🚚</div><div><h2>Overs / Unders / Shipping</h2><p>Quantity tolerances and shipping timing.</p></div></div>
+        <div class="body">
+          <div class="grid cols-3">
+            <div class="field"><label>Overage OK</label><div class="yn" data-field="overageOK" data-label="Overage OK"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+            <div class="field"><label>Ship Early</label><div class="yn" data-field="shipEarly" data-label="Ship Early"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+            <div class="field"><label>Unders OK</label><div class="yn" data-field="undersOK" data-label="Unders OK"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NOTES -->
+      <section class="card" id="sec-notes">
+        <div class="head"><div class="ic c10">📝</div><div><h2>Special Instructions</h2><p>Anything else the press and prepress team should know.</p></div></div>
+        <div class="body">
+          <div class="field">
+            <textarea data-field="instructions" data-label="Instructions" style="min-height:120px;" placeholder="Free-form notes for this job…"></textarea>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div class="actionbar">
+  <div class="actionbar-inner">
+    <div class="btns">
+      <button class="act primary" id="btnSave">💾 Save Draft</button>
+      <button class="act secondary" id="btnLoad">📂 Load Draft</button>
+      <button class="act secondary" id="btnCopy">📋 Copy to Clipboard</button>
+      <button class="act secondary" id="btnExport">⬇️ Export Text</button>
+      <button class="act secondary" id="btnPrint">🖨️ Print / PDF</button>
+      <button class="act warn" id="btnClear">✖ Clear Form</button>
+    </div>
+    <div class="savemsg" id="saveMsg"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   DROPDOWN OPTIONS — EDIT THIS BLOCK TO ADD/REMOVE CHOICES
+   ------------------------------------------------------------
+   Each key below feeds one or more <select> fields on the page
+   (matched by that field's data-options="..." attribute).
+   To add a new choice, add a new line inside the array, e.g.:
+       proofOptions: ["Standard", "Blind", "Customer Specific", "New Choice Here"],
+   To add a brand-new dropdown field:
+     1. Add a new key + array here.
+     2. In the HTML, add <select data-field="yourField"
+        data-label="Your Label" data-options="yourKey"></select>
+   Order in the array is the order shown in the dropdown.
+   ============================================================ */
+var DROPDOWN_OPTIONS = {
+  proofOptions:      ["Standard", "Blind", "Customer Specific"],
+  artStatus:         ["New", "Previous"],
+  pressTarget:       ["Internal Proof", "Default Color Settings", "Archive", "PMS", "Hard Copy Proof", "Drawdown", "Enclosed Sample"],
+  pressFinish:       ["Gloss", "Satin", "Matte", "UV", "Raw"],
+  bleeds:            ["Front", "Back", "Both", "None"],
+  silkScreenTarget:  ["Archive", "New"],
+  screenType:        ["Flood", "Spot"]
+};
+/* ============================================================ */
+
+(function(){
+  var STORAGE_KEY = 'pressJobSpecSheet.v1';
+
+  // Build every <select data-options="..."> from DROPDOWN_OPTIONS above.
+  document.querySelectorAll('select[data-options]').forEach(function(sel){
+    var key = sel.getAttribute('data-options');
+    var choices = DROPDOWN_OPTIONS[key] || [];
+    var html = '<option value="">Select…</option>';
+    choices.forEach(function(choice){
+      html += '<option value="' + choice.replace(/"/g,'&quot;') + '">' + choice + '</option>';
+    });
+    sel.innerHTML = html;
+  });
+
+  var yn = document.querySelectorAll('.yn');
+  yn.forEach(function(group){
+    var yesBtn = group.querySelector('.yes');
+    var noBtn = group.querySelector('.no');
+    group.value = '';
+    function setVal(v){
+      group.value = v;
+      yesBtn.classList.toggle('active', v === 'Yes');
+      noBtn.classList.toggle('active', v === 'No');
+      group.setAttribute('data-print-val', v || '—');
+      onFieldChange(group.getAttribute('data-field'));
+    }
+    yesBtn.addEventListener('click', function(){ setVal(group.value === 'Yes' ? '' : 'Yes'); });
+    noBtn.addEventListener('click', function(){ setVal(group.value === 'No' ? '' : 'No'); });
+    group._setVal = setVal;
+  });
+
+  var silkYN = document.querySelector('.yn[data-field="silkScreen"]');
+  var silkPanel = document.getElementById('silkPanel');
+  var holeYN = document.querySelector('.yn[data-field="holePunch"]');
+  var holeField = document.getElementById('holePunchDetailsField');
+
+  function onFieldChange(field){
+    if (field === 'silkScreen') silkPanel.classList.toggle('open', silkYN.value === 'Yes');
+    if (field === 'holePunch') holeField.style.display = (holeYN.value === 'Yes') ? 'flex' : 'none';
+    updateProgress();
+  }
+
+  var inputs = document.querySelectorAll('[data-field]');
+  inputs.forEach(function(el){
+    if (el.classList.contains('yn')) return;
+    el.addEventListener('input', function(){ el.classList.remove('invalid'); updateProgress(); });
+    el.addEventListener('change', updateProgress);
+  });
+
+  function allFieldEls(){
+    return document.querySelectorAll('input[data-field], select[data-field], textarea[data-field], .yn[data-field]');
+  }
+
+  function getValue(el){
+    if (el.classList.contains('yn')) return el.value || '';
+    return el.value || '';
+  }
+  function setValue(el, val){
+    if (el.classList.contains('yn')) { el._setVal(val || ''); return; }
+    el.value = val || '';
+  }
+
+  function updateProgress(){
+    var els = Array.prototype.slice.call(allFieldEls());
+    var filled = 0;
+    els.forEach(function(el){ if (getValue(el).trim() !== '') filled++; });
+    var pct = Math.round((filled / els.length) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressNum').textContent = pct + '%';
+
+    var sectionMap = {
+      'sec-job':['customerName','jobNumber','salesRep'],
+      'sec-proof':['proofOptions','proofAttention','signOffDate'],
+      'sec-callouts':['pliOnBack','arrow','pcNumber'],
+      'sec-art':['frontArt','backArt'],
+      'sec-tooling':['lockSystem','lockSystemTech','dieNumber','size','thickness'],
+      'sec-stock':['stock','stockColor'],
+      'sec-press':['pressTarget','pressFrontFinish','pressBackFinish','frontColor','backColor','bleeds'],
+      'sec-silk':['silkScreen'],
+      'sec-finish':['holePunch','shrinkWrapPacks','sleeve','sleeveLabels'],
+      'sec-ship':['overageOK','shipEarly','undersOK'],
+      'sec-notes':['instructions']
+    };
+    Object.keys(sectionMap).forEach(function(secId){
+      var fields = sectionMap[secId];
+      var any = fields.some(function(f){
+        var el = document.querySelector('[data-field="'+f+'"]');
+        return el && getValue(el).trim() !== '';
+      });
+      var link = document.querySelector('nav.jump a[href="#'+secId+'"]');
+      if (link) link.classList.toggle('done', any);
+    });
+  }
+
+  function collectData(){
+    var data = {};
+    allFieldEls().forEach(function(el){
+      data[el.getAttribute('data-field')] = getValue(el);
+    });
+    return data;
+  }
+
+  function applyData(data){
+    allFieldEls().forEach(function(el){
+      var f = el.getAttribute('data-field');
+      if (data.hasOwnProperty(f)) setValue(el, data[f]);
+    });
+    onFieldChange('silkScreen');
+    onFieldChange('holePunch');
+    updateProgress();
+  }
+
+  function toast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2200);
+  }
+
+  document.getElementById('btnSave').addEventListener('click', function(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(collectData()));
+    var msg = document.getElementById('saveMsg');
+    msg.textContent = 'Saved ' + new Date().toLocaleTimeString();
+    toast('Draft saved to this browser');
+  });
+
+  document.getElementById('btnLoad').addEventListener('click', function(){
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw){ toast('No saved draft found'); return; }
+    try{ applyData(JSON.parse(raw)); toast('Draft loaded'); }
+    catch(e){ toast('Could not read saved draft'); }
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function(){
+    if (!confirm('Clear all fields on this form? This cannot be undone.')) return;
+    allFieldEls().forEach(function(el){ setValue(el, ''); });
+    onFieldChange('silkScreen');
+    onFieldChange('holePunch');
+    updateProgress();
+    toast('Form cleared');
+  });
+
+  document.getElementById('btnPrint').addEventListener('click', function(){ window.print(); });
+
+  function buildSummaryText(){
+    var lines = [];
+    lines.push('PRESS JOB SPEC SHEET');
+    lines.push('Generated: ' + new Date().toLocaleString());
+    lines.push('');
+    var order = ['sec-job','sec-proof','sec-callouts','sec-art','sec-tooling','sec-stock','sec-press','sec-silk','sec-finish','sec-ship','sec-notes'];
+    order.forEach(function(secId){
+      var card = document.getElementById(secId);
+      var title = card.querySelector('h2').textContent;
+      lines.push('== ' + title.toUpperCase() + ' ==');
+      var fields = card.querySelectorAll('[data-field]');
+      fields.forEach(function(el){
+        var label = el.getAttribute('data-label');
+        var val = getValue(el).trim();
+        lines.push(label + ': ' + (val || '—'));
+      });
+      lines.push('');
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('btnExport').addEventListener('click', function(){
+    var blob = new Blob([buildSummaryText()], {type:'text/plain'});
+    var a = document.createElement('a');
+    var custEl = document.querySelector('[data-field="customerName"]');
+    var custName = (custEl && custEl.value.trim()) ? custEl.value.trim().replace(/[^a-z0-9]+/gi,'_') : 'job';
+    a.href = URL.createObjectURL(blob);
+    a.download = 'job_spec_' + custName + '.txt';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    toast('Exported as text file');
+  });
+
+  document.getElementById('btnCopy').addEventListener('click', function(){
+    var text = buildSummaryText();
+    function fallbackCopy(){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch(e) { ok = false; }
+      document.body.removeChild(ta);
+      toast(ok ? 'Copied to clipboard' : 'Copy failed — select and copy manually');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){
+        toast('Copied to clipboard');
+      }).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+  });
+
+  updateProgress();
+
+  window.addEventListener('beforeprint', function(){
+    document.querySelectorAll('.yn').forEach(function(g){
+      g.setAttribute('data-print-val', g.value || '—');
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
