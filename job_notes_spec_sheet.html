@@ -73,14 +73,9 @@
     transition:background .15s; cursor:pointer; font-family:inherit; appearance:none;
   }
   .help-link:hover{background:rgba(255,255,255,.18);}
-  .status-chip{
-    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
-    border-radius:999px; padding:10px 18px; min-width:220px;
-  }
-  .status-chip .label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px;}
-  .progress-track{height:8px;border-radius:999px;background:rgba(255,255,255,.15);overflow:hidden;}
+  .progress-track{height:8px;border-radius:999px;background:#eee9df;overflow:hidden;}
   .progress-fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--yellow));transition:width .3s ease;}
-  .progress-num{font-size:13px;font-weight:700;margin-top:6px;text-align:right;}
+  .progress-num{font-size:13px;font-weight:700;margin-top:6px;text-align:right;color:var(--ink);}
 
   /* ---------- Layout ---------- */
   .shell{max-width:1180px;margin:0 auto;padding:24px;}
@@ -101,6 +96,8 @@
   nav.jump a:hover{background:#f4f1ea;}
   nav.jump a .dot{width:8px;height:8px;border-radius:50%;background:var(--line);flex:none;}
   nav.jump a.done .dot{background:var(--good);}
+  .nav-progress{margin-top:14px; padding:14px 10px 4px; border-top:1px solid var(--line);}
+  .nav-progress .np-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
 
   main{display:flex;flex-direction:column;gap:20px;}
 
@@ -318,14 +315,7 @@
         <div class="sub">Job Notes &amp; Customer Specification Intake</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-      <button type="button" class="help-link" id="btnGuideOpen">❓ How to Use This Form</button>
-      <div class="status-chip">
-        <div class="label">Form Completion</div>
-        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="progress-num" id="progressNum">0%</div>
-      </div>
-    </div>
+    <button type="button" class="help-link" id="btnGuideOpen">❓ How to Use This Form</button>
   </div>
 </header>
 
@@ -357,6 +347,12 @@
       <a href="#sec-finish"><span class="dot"></span> Finishing &amp; Packaging</a>
       <a href="#sec-ship"><span class="dot"></span> Overs / Unders / Ship</a>
       <a href="#sec-notes"><span class="dot"></span> Special Instructions</a>
+
+      <div class="nav-progress">
+        <div class="np-label">Form Completion</div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-num" id="progressNum">0%</div>
+      </div>
     </nav>
 
     <main>
