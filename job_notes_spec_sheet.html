@@ -186,7 +186,7 @@
   .ic.c1{background:var(--cyan);} .ic.c2{background:var(--magenta);} .ic.c3{background:var(--orange);}
   .ic.c4{background:#7c3aed;} .ic.c5{background:#0ea5a4;} .ic.c6{background:var(--key);}
   .ic.c7{background:#d946ef;} .ic.c8{background:#f59e0b;} .ic.c9{background:var(--good);}
-  .ic.c10{background:#334155;}
+  .ic.c10{background:#334155;} .ic.c11{background:#2563eb;}
 
   @media print{
     header.top, nav.jump, .actionbar, #toast{display:none !important;}
@@ -230,6 +230,7 @@
       <a href="#sec-callouts"><span class="dot"></span> Job Callouts</a>
       <a href="#sec-art"><span class="dot"></span> Artwork</a>
       <a href="#sec-tooling"><span class="dot"></span> Tooling &amp; Die</a>
+      <a href="#sec-rfid"><span class="dot"></span> RFID Inlay</a>
       <a href="#sec-stock"><span class="dot"></span> Stock &amp; Substrate</a>
       <a href="#sec-press"><span class="dot"></span> Press Specs</a>
       <a href="#sec-silk"><span class="dot"></span> Silk Screen</a>
@@ -312,6 +313,20 @@
             <div class="field"><label>Die #</label><input type="text" data-field="dieNumber" data-label="Die #"></div>
             <div class="field"><label>Size</label><input type="text" data-field="size" data-label="Size" placeholder="e.g. 12oz, 4.5 x 8 in"></div>
             <div class="field"><label>Thickness</label><input type="text" data-field="thickness" data-label="Thickness" placeholder="e.g. .014&quot;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RFID -->
+      <section class="card" id="sec-rfid">
+        <div class="head"><div class="ic c11">📶</div><div><h2>RFID Inlay</h2><p>Inlay chip type and encoding requirements for this job.</p></div></div>
+        <div class="body">
+          <div class="grid">
+            <div class="field">
+              <label>RFID Inlay Type</label>
+              <select data-field="rfidInlayType" data-label="RFID Inlay Type" data-options="rfidInlayType"></select>
+            </div>
+            <div class="field"><label>Ving Encoding</label><div class="yn" data-field="vingEncoding" data-label="Ving Encoding"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
           </div>
         </div>
       </section>
@@ -451,6 +466,12 @@
      2. In the HTML, add <select data-field="yourField"
         data-label="Your Label" data-options="yourKey"></select>
    Order in the array is the order shown in the dropdown.
+
+   Some fields (like rfidInlayType below) are GROUPED instead of a flat
+   array — use a plain object of { "Group Label": ["choice", "choice"] }
+   and each group renders as its own labeled section in the dropdown.
+   Add a new chip type by adding a line inside the matching group's
+   array, or a new group by adding a new "Group Label": [...] entry.
    ============================================================ */
 var DROPDOWN_OPTIONS = {
   proofOptions:      ["Standard", "Blind", "Customer Specific"],
@@ -459,7 +480,11 @@ var DROPDOWN_OPTIONS = {
   pressFinish:       ["Gloss", "Satin", "Matte", "UV", "Raw"],
   bleeds:            ["Front", "Back", "Both", "None"],
   silkScreenTarget:  ["Archive", "New"],
-  screenType:        ["Flood", "Spot"]
+  screenType:        ["Flood", "Spot"],
+  rfidInlayType: {
+    "UL Family":     ["UL 48", "UL 128", "UL C", "UL AES"],
+    "Mifare Family": ["Mifare Classic 1K", "Mifare Classic 4K", "Mifare Plus 1K"]
+  }
 };
 /* ============================================================ */
 
@@ -467,13 +492,24 @@ var DROPDOWN_OPTIONS = {
   var STORAGE_KEY = 'pressJobSpecSheet.v1';
 
   // Build every <select data-options="..."> from DROPDOWN_OPTIONS above.
+  // Supports a flat array (["a","b"]) or a grouped object
+  // ({ "Group Label": ["a","b"] }) which renders as <optgroup> blocks.
+  function optionHtml(choice){
+    return '<option value="' + choice.replace(/"/g,'&quot;') + '">' + choice + '</option>';
+  }
   document.querySelectorAll('select[data-options]').forEach(function(sel){
     var key = sel.getAttribute('data-options');
     var choices = DROPDOWN_OPTIONS[key] || [];
     var html = '<option value="">Select…</option>';
-    choices.forEach(function(choice){
-      html += '<option value="' + choice.replace(/"/g,'&quot;') + '">' + choice + '</option>';
-    });
+    if (Array.isArray(choices)) {
+      choices.forEach(function(choice){ html += optionHtml(choice); });
+    } else {
+      Object.keys(choices).forEach(function(group){
+        html += '<optgroup label="' + group.replace(/"/g,'&quot;') + '">';
+        choices[group].forEach(function(choice){ html += optionHtml(choice); });
+        html += '</optgroup>';
+      });
+    }
     sel.innerHTML = html;
   });
 
@@ -539,6 +575,7 @@ var DROPDOWN_OPTIONS = {
       'sec-callouts':['pliOnBack','arrow','pcNumber'],
       'sec-art':['frontArt','backArt'],
       'sec-tooling':['lockSystem','lockSystemTech','dieNumber','size','thickness'],
+      'sec-rfid':['rfidInlayType','vingEncoding'],
       'sec-stock':['stock','stockColor'],
       'sec-press':['pressTarget','pressFrontFinish','pressBackFinish','frontColor','backColor','bleeds'],
       'sec-silk':['silkScreen'],
@@ -612,7 +649,7 @@ var DROPDOWN_OPTIONS = {
     lines.push('PRESS JOB SPEC SHEET');
     lines.push('Generated: ' + new Date().toLocaleString());
     lines.push('');
-    var order = ['sec-job','sec-proof','sec-callouts','sec-art','sec-tooling','sec-stock','sec-press','sec-silk','sec-finish','sec-ship','sec-notes'];
+    var order = ['sec-job','sec-proof','sec-callouts','sec-art','sec-tooling','sec-rfid','sec-stock','sec-press','sec-silk','sec-finish','sec-ship','sec-notes'];
     order.forEach(function(secId){
       var card = document.getElementById(secId);
       var title = card.querySelector('h2').textContent;
