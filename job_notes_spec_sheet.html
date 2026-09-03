@@ -70,7 +70,7 @@
     color:#fff; text-decoration:none; font-size:13px; font-weight:700;
     background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
     border-radius:999px; padding:9px 16px; white-space:nowrap;
-    transition:background .15s;
+    transition:background .15s; cursor:pointer; font-family:inherit; appearance:none;
   }
   .help-link:hover{background:rgba(255,255,255,.18);}
   .status-chip{
@@ -217,7 +217,7 @@
   .ic.c10{background:#334155;} .ic.c11{background:#2563eb;}
 
   @media print{
-    header.top, nav.jump, .actionbar, #toast{display:none !important;}
+    header.top, nav.jump, .actionbar, #toast, .guide-overlay{display:none !important;}
     body{padding:0;background:#fff;}
     .card{box-shadow:none; border:1px solid #ccc; break-inside:avoid; margin-bottom:10px;}
     .layout{display:block;}
@@ -225,6 +225,86 @@
     .yn button{display:none;}
     .yn::after{content:attr(data-print-val); font-weight:700;}
   }
+
+  /* ---------- Guide overlay (How to Use This Form) ---------- */
+  .guide-overlay{
+    position:fixed; inset:0; z-index:100;
+    background:rgba(10,8,10,.6);
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:40px 20px; overflow-y:auto;
+  }
+  .guide-overlay[hidden]{display:none;}
+  .guide-panel{
+    background:var(--paper); width:100%; max-width:920px; border-radius:var(--radius);
+    box-shadow:0 24px 60px rgba(0,0,0,.45); overflow:hidden; margin-bottom:40px;
+  }
+  .guide-panel-head{
+    position:sticky; top:0; z-index:2;
+    background:linear-gradient(120deg,#141014 0%,#221a22 55%,#171217 100%);
+    color:#fff; padding:18px 22px; display:flex; align-items:center; justify-content:space-between; gap:16px;
+  }
+  .guide-panel-head .brand{display:flex;align-items:center;gap:12px;}
+  .guide-panel-head .brand .mark{width:40px;height:40px;font-size:19px;}
+  .guide-panel-head .brand h1{font-size:17px;letter-spacing:.5px;font-weight:800;}
+  .guide-panel-head .brand .sub{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:2px;}
+  .guide-close{
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:#fff;
+    width:34px;height:34px;border-radius:50%; font-size:15px; cursor:pointer; flex:none;
+    display:flex;align-items:center;justify-content:center; transition:background .15s;
+  }
+  .guide-close:hover{background:rgba(255,255,255,.2);}
+  .guide-panel-body{padding:24px 26px 28px;}
+
+  .guide-panel .intro{
+    background:linear-gradient(90deg, rgba(0,174,239,.08), rgba(236,0,140,.06));
+    border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 20px; margin-bottom:22px; font-size:14px; color:#3a3530;
+  }
+  .guide-panel .intro strong{color:var(--ink);}
+  .guide-panel .toc{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;}
+  .guide-panel .toc a{
+    font-size:12.5px;font-weight:700;text-decoration:none;color:var(--ink);
+    background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 14px;
+  }
+  .guide-panel .toc a:hover{border-color:var(--cyan);}
+  .guide-panel .card{margin-bottom:18px;}
+  .guide-panel .card .body p{margin-bottom:12px;font-size:14px;color:#3a3530;}
+  .guide-panel .card .body p:last-child{margin-bottom:0;}
+  .guide-panel .card .body ul,.guide-panel .card .body ol{margin:0 0 12px 20px;}
+  .guide-panel .card .body li{margin-bottom:8px;font-size:14px;color:#3a3530;}
+  .guide-panel .card .body strong{color:var(--ink);}
+  .guide-panel .step{display:flex;gap:14px;margin-bottom:16px;align-items:flex-start;}
+  .guide-panel .step:last-child{margin-bottom:0;}
+  .guide-panel .step .num{
+    width:26px;height:26px;border-radius:50%;flex:none;
+    background:linear-gradient(135deg,var(--cyan),var(--magenta));
+    color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;
+  }
+  .guide-panel .step .txt{font-size:14px;color:#3a3530;padding-top:2px;}
+  .guide-panel .step .txt strong{color:var(--ink);}
+  .guide-panel code{
+    background:#f4f1ea;border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+    font-family:'Consolas','Courier New',monospace;font-size:13px;color:#a3196a;
+  }
+  .guide-panel pre.code-block{
+    background:#171417;color:#e8e6e3;border-radius:10px;padding:16px 18px;
+    font-family:'Consolas','Courier New',monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;margin:12px 0;
+  }
+  .guide-panel pre.code-block .k{color:#7fd7ff;}
+  .guide-panel pre.code-block .s{color:#ffd97a;}
+  .guide-panel pre.code-block .c{color:#8a8580;}
+  .guide-panel .callout{display:flex;gap:12px;border-radius:10px;padding:14px 16px;margin:14px 0;font-size:13.5px;}
+  .guide-panel .callout.warn{background:#fff6e0;border:1.5px solid #f2b73a;color:#5c3d0a;}
+  .guide-panel .callout.good{background:#eafaf1;border:1.5px solid #57c98a;color:#0e5c33;}
+  .guide-panel .callout .ci{font-size:17px;flex:none;line-height:1.3;}
+  .guide-panel .btn-preview{
+    display:inline-flex;align-items:center;gap:6px;border-radius:9px;padding:7px 13px;
+    font-weight:800;font-size:12.5px;background:#171417;color:#fff;margin:2px 3px 2px 0;
+  }
+  .guide-panel .btn-preview.primary{background:linear-gradient(90deg,var(--cyan),var(--magenta));}
+  .guide-panel .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:640px){.guide-panel .grid2{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -241,7 +321,7 @@
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-      <a class="help-link" href="onboarding_guide.html">❓ How to Use This Form</a>
+      <button type="button" class="help-link" id="btnGuideOpen">❓ How to Use This Form</button>
       <div class="status-chip">
         <div class="label">Form Completion</div>
         <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
@@ -514,6 +594,205 @@
 </div>
 
 <div id="toast"></div>
+
+<div class="guide-overlay" id="guideOverlay" hidden>
+  <div class="guide-panel" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+    <div class="guide-panel-head">
+      <div class="brand">
+        <div class="mark">❓</div>
+        <div>
+          <h1 id="guideTitle">How to Use This Form</h1>
+          <div class="sub">Press Job Spec Sheet &mdash; Sales Team Guide</div>
+        </div>
+      </div>
+      <button type="button" class="guide-close" id="guideClose" aria-label="Close guide">✕</button>
+    </div>
+    <div class="guide-panel-body">
+
+      <div class="intro">
+        The <strong>Press Job Spec Sheet</strong> is a self-contained web page — no install, no server, no internet
+        connection required. This guide covers filling it out, saving/loading drafts, exporting a job for
+        prepress, and — for whoever maintains the form — how to safely add or remove dropdown options.
+      </div>
+
+      <div class="toc">
+        <a href="#guide-filling">1. Filling Out the Form</a>
+        <a href="#guide-drafts">2. Saving &amp; Loading Drafts</a>
+        <a href="#guide-export">3. Exporting a Job</a>
+        <a href="#guide-maintain">4. Adding / Removing Options</a>
+        <a href="#guide-faq">5. Troubleshooting</a>
+      </div>
+
+      <!-- 1. FILLING OUT -->
+      <section class="card" id="guide-filling">
+        <div class="head"><div class="ic c1">📋</div><div><h2>1. Filling Out the Form</h2></div></div>
+        <div class="body">
+          <p>The form is split into sections — Job Info, Proof &amp; Sign-Off, Job Callouts, Artwork, Tooling &amp; Die,
+          RFID Inlay, Stock &amp; Substrate, Press Specs, Silk Screen, Finishing &amp; Packaging, Overs/Unders/Shipping,
+          and Special Instructions. Use the left sidebar to jump straight to any section — each link shows that
+          section's icon plus a status dot that turns green once you've entered something in it.</p>
+          <div class="grid2">
+            <div>
+              <p><strong>Dropdowns</strong> — click and pick one option. Used wherever the spreadsheet had a fixed
+              list of choices (e.g. Proof Options, Press Finish, Bleeds).</p>
+            </div>
+            <div>
+              <p><strong>Yes / No toggles</strong> — click either pill to select it; click it again to clear it.
+              Used for the simple callout fields (PLI on Back, Arrow, Overage OK, etc.).</p>
+            </div>
+          </div>
+          <p><strong>Conditional fields</strong> — a couple of sections reveal extra fields automatically:</p>
+          <ul>
+            <li>Setting <strong>Silk Screen</strong> to <em>Yes</em> reveals Silk Screen Target, Screen Type, and a
+            details box for the screen effect.</li>
+            <li>Setting <strong>Hole Punch</strong> to <em>Yes</em> reveals a details field for location/size/quantity.</li>
+          </ul>
+          <p>The <strong>Form Completion</strong> bar in the top-right fills in as you go — it's just a visual guide,
+          not a hard requirement. Only <strong>Proof Options</strong> is marked required (red asterisk); everything
+          else is optional so you can send a partial spec sheet if that's all the customer has given you so far.</p>
+        </div>
+      </section>
+
+      <!-- 2. DRAFTS -->
+      <section class="card" id="guide-drafts">
+        <div class="head"><div class="ic c2">💾</div><div><h2>2. Saving &amp; Loading Drafts</h2></div></div>
+        <div class="body">
+          <div class="step">
+            <div class="num">1</div>
+            <div class="txt"><strong>Save Draft</strong> stores everything currently in the form in this browser's
+            local storage — <span class="btn-preview primary">💾 Save Draft</span> in the bottom action bar.</div>
+          </div>
+          <div class="step">
+            <div class="num">2</div>
+            <div class="txt"><strong>Load Draft</strong> — <span class="btn-preview">📂 Load Draft</span> — brings
+            that saved data back into the form. Useful if you need to close the tab and pick a job back up later,
+            or step away mid-call with a customer.</div>
+          </div>
+          <div class="callout warn">
+            <div class="ci">⚠️</div>
+            <div><strong>A saved draft lives only in one browser, on one computer.</strong> It is not a file, it is
+            not synced to a server, and it is not shared between machines. If you clear your browser's site data,
+            switch computers, or open the form in a different browser, the draft won't be there. There is only
+            <em>one</em> saved draft slot at a time — saving again overwrites the previous one. For anything you
+            need to keep long-term or hand off to someone else, use <strong>Export Text</strong> (see next section)
+            instead.</div>
+          </div>
+          <div class="callout good">
+            <div class="ci">✅</div>
+            <div><strong>New dropdown options never break an old draft.</strong> If the form gets new choices added
+            to an existing dropdown after you saved a draft, loading that draft still works perfectly — your
+            previous selection is still in the list.</div>
+          </div>
+          <div class="callout warn">
+            <div class="ci">⚠️</div>
+            <div><strong>Renamed or removed options can.</strong> If a dropdown option you had selected gets renamed
+            or deleted from the form later, loading an old draft will clear just that one field and show a yellow
+            warning banner at the top of the page telling you exactly which field to re-check. Nothing else in the
+            draft is affected — see <a href="#guide-maintain">section 4</a> for why this happens.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. EXPORT -->
+      <section class="card" id="guide-export">
+        <div class="head"><div class="ic c3">📦</div><div><h2>3. Exporting a Job</h2></div></div>
+        <div class="body">
+          <p>Three ways to get a finished spec sheet out of the form and to prepress/the press floor:</p>
+          <ul>
+            <li><span class="btn-preview">📋 Copy to Clipboard</span> — copies a clean, labeled text summary of
+            every field, grouped by section. Paste it straight into an email, Teams/Slack message, or your job
+            ticketing system.</li>
+            <li><span class="btn-preview">⬇️ Export Text</span> — downloads that same summary as a <code>.txt</code>
+            file named after the customer, for attaching to a job folder or email.</li>
+            <li><span class="btn-preview">🖨️ Print / PDF</span> — opens the browser's print dialog with a clean,
+            button-free layout. Choose "Save as PDF" as the printer to get a PDF instead of a paper printout.</li>
+          </ul>
+          <p>Blank fields show as <code>—</code> in the exported summary so it's obvious at a glance what still
+          needs to be filled in.</p>
+        </div>
+      </section>
+
+      <!-- 4. MAINTAIN -->
+      <section class="card" id="guide-maintain">
+        <div class="head"><div class="ic c4">🛠️</div><div><h2>4. Adding / Removing Dropdown Options</h2></div></div>
+        <div class="body">
+          <p>This section is for whoever maintains the form file, not day-to-day form users. Every dropdown's choices
+          live in <strong>one place</strong>: a block near the top of the <code>&lt;script&gt;</code> called
+          <code>DROPDOWN_OPTIONS</code>, clearly marked with a comment header. You don't need to touch any HTML to
+          change a dropdown's choices.</p>
+
+          <pre class="code-block"><span class="c">// Flat list — shows as a plain dropdown</span>
+<span class="k">var</span> DROPDOWN_OPTIONS = {
+  proofOptions: [<span class="s">"Standard"</span>, <span class="s">"Blind"</span>, <span class="s">"Customer Specific"</span>],
+  <span class="c">// ...</span>
+
+  <span class="c">// Grouped list — shows as labeled sections inside the dropdown</span>
+  rfidInlayType: {
+    <span class="s">"UL Family"</span>:     [<span class="s">"UL 48"</span>, <span class="s">"UL 128"</span>, <span class="s">"UL C"</span>, <span class="s">"UL AES"</span>],
+    <span class="s">"Mifare Family"</span>: [<span class="s">"Mifare Classic 1K"</span>, <span class="s">"Mifare Classic 4K"</span>, <span class="s">"Mifare Plus 1K"</span>]
+  }
+};</pre>
+
+          <div class="step">
+            <div class="num">1</div>
+            <div class="txt"><strong>To add a choice</strong> to an existing dropdown: open the file in any text
+            editor, find that field's array, and add a new <code>"Choice Name"</code> inside the square brackets,
+            separated by a comma. Save the file and reload the page in the browser — that's it.</div>
+          </div>
+          <div class="step">
+            <div class="num">2</div>
+            <div class="txt"><strong>To add a whole new dropdown field</strong>, add a new
+            <code>key: [...]</code> line to <code>DROPDOWN_OPTIONS</code>, then in the HTML add
+            <code>&lt;select data-field="yourField" data-label="Your Label" data-options="yourKey"&gt;&lt;/select&gt;</code>
+            — the page fills in the options automatically on load.</div>
+          </div>
+          <div class="step">
+            <div class="num">3</div>
+            <div class="txt"><strong>To group choices</strong> like the RFID Inlay Type dropdown, use an object of
+            <code>"Group Label": [...]</code> instead of a flat array (see the second example above). Each group
+            becomes its own labeled section in the dropdown.</div>
+          </div>
+
+          <div class="callout good">
+            <div class="ci">✅</div>
+            <div><strong>Adding options is always safe.</strong> It never affects anyone's saved draft — old
+            selections keep working exactly as before.</div>
+          </div>
+          <div class="callout warn">
+            <div class="ci">⚠️</div>
+            <div><strong>Renaming or deleting an existing option is not silent.</strong> Anyone with a draft that
+            used the old text will see that one field cleared and flagged with a warning banner next time they load
+            their draft (see <a href="#guide-drafts">section 2</a>). This is by design — better a visible warning than a
+            job silently shipping with the wrong spec. If you just need to fix a typo in an option's wording,
+            expect a few of these warnings to show up for anyone with an in-progress draft; that's normal.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. FAQ -->
+      <section class="card" id="guide-faq">
+        <div class="head"><div class="ic c11">💬</div><div><h2>5. Troubleshooting</h2></div></div>
+        <div class="body">
+          <p><strong>I loaded a draft and one of my dropdown answers disappeared.</strong><br>
+          That option was renamed or removed from the form since you saved. Look for the yellow warning banner at
+          the top of the page — it names the exact field so you can re-select the closest current option.</p>
+          <p><strong>Load Draft says "No saved draft found."</strong><br>
+          Either you haven't clicked Save Draft yet on this computer/browser, or your browser's site data was
+          cleared since the last save. Drafts don't transfer between computers or browsers — see
+          <a href="#guide-drafts">section 2</a>.</p>
+          <p><strong>Copy to Clipboard didn't seem to do anything.</strong><br>
+          Some browsers block clipboard access until you interact with the page first — click anywhere on the form
+          once, then try the button again. A confirmation toast appears in the top-right when it works.</p>
+          <p><strong>Can multiple people use this at once?</strong><br>
+          Yes — each person opens their own copy of the HTML file in their own browser. There's no shared server or
+          database, so two people's drafts never collide, but they also can't see each other's in-progress work.
+          Use Export/Copy to hand a finished sheet to someone else.</p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
 
 <script>
 /* ============================================================
@@ -804,6 +1083,25 @@ var DROPDOWN_OPTIONS = {
     document.querySelectorAll('.yn').forEach(function(g){
       g.setAttribute('data-print-val', g.value || '—');
     });
+  });
+
+  // ---- How to Use This Form (guide overlay) ----
+  var guideOverlay = document.getElementById('guideOverlay');
+  function openGuide(){
+    guideOverlay.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  function closeGuide(){
+    guideOverlay.hidden = true;
+    document.body.style.overflow = '';
+  }
+  document.getElementById('btnGuideOpen').addEventListener('click', openGuide);
+  document.getElementById('guideClose').addEventListener('click', closeGuide);
+  guideOverlay.addEventListener('click', function(e){
+    if (e.target === guideOverlay) closeGuide();
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && !guideOverlay.hidden) closeGuide();
   });
 })();
 </script>
