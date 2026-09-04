@@ -177,12 +177,24 @@
   }
   .field label{font-size:12.5px;font-weight:700;color:#3a3530;display:flex;justify-content:space-between;}
   .field label .req{color:var(--magenta);font-weight:800;}
+  /* Hole Punch's own row: Hole Punch / Hole Type / Orientation side by side,
+     separated by thin dividers instead of stacked as separate grid rows. */
+  .hole-row{display:flex;align-items:flex-start;flex-wrap:wrap;row-gap:16px;}
+  .hole-item{display:flex;flex-direction:column;gap:8px;padding:0 20px;}
+  .hole-item:first-child{padding-left:0;}
+  .hole-item + .hole-item{border-left:1px solid var(--line);}
+  /* Location + Offset sit side by side below that row. */
+  .hole-location-wrap{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+  .hole-location-wrap .subpanel{flex:1;min-width:260px;}
+  .offset-box{
+    display:flex;align-items:center;gap:8px;flex:none;
+    border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:rgba(0,0,0,.02);
+  }
   /* Bordered nested group for a cluster of related sub-options (e.g. Hole
      Punch Location) — sets it apart from the plain field grid around it. */
   .subpanel{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:rgba(0,0,0,.02);}
-  .subpanel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .subpanel-head{margin-bottom:12px;}
   .subpanel-head > label{font-size:12.5px;font-weight:700;color:#3a3530;margin:0;}
-  .subpanel-offset{display:flex;align-items:center;gap:8px;}
   .subpanel-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
   .subpanel-row + .subpanel-row{margin-top:12px;}
   .subpanel-row .row-label{font-size:11.5px;font-weight:700;color:var(--muted);min-width:44px;}
@@ -725,22 +737,23 @@
       <section class="card" id="sec-finish">
         <div class="head"><div class="ic c8">📦</div><div><h2>Finishing &amp; Packaging</h2><p>Post-press operations and how the job ships out.</p></div></div>
         <div class="body">
-          <div class="grid">
-            <div class="field"><label>Hole Punch</label><div class="yn" data-field="holePunch" data-label="Hole Punch"><button type="button" class="yes">Yes</button></div></div>
-          </div>
-          <div id="holePunchDetailsField" style="display:none; margin-top:16px;">
-            <div class="grid">
-              <div class="field"><label>Hole Type</label><div class="btn-group" data-field="holeType" data-label="Hole Type" data-options="holeType"></div></div>
-              <div class="field"><label>Orientation</label><div class="btn-group" data-field="holeOrientation" data-label="Orientation" data-options="holeOrientation"></div></div>
+          <div class="hole-row">
+            <div class="hole-item">
+              <label>Hole Punch</label>
+              <div class="yn" data-field="holePunch" data-label="Hole Punch"><button type="button" class="yes">Yes</button></div>
             </div>
-            <div class="subpanel" style="margin-top:16px;">
-              <div class="subpanel-head">
-                <label>Location</label>
-                <div class="subpanel-offset">
-                  <span class="hint">Offset</span>
-                  <div class="yn" data-field="holeOffset" data-label="Offset"><button type="button" class="yes">Yes</button></div>
-                </div>
-              </div>
+            <div class="hole-item" id="holeTypeItem" style="display:none;">
+              <label>Hole Type</label>
+              <div class="btn-group" data-field="holeType" data-label="Hole Type" data-options="holeType"></div>
+            </div>
+            <div class="hole-item" id="holeOrientationItem" style="display:none;">
+              <label>Orientation</label>
+              <div class="btn-group" data-field="holeOrientation" data-label="Orientation" data-options="holeOrientation"></div>
+            </div>
+          </div>
+          <div class="hole-location-wrap" id="holeLocationWrap" style="display:none; margin-top:16px;">
+            <div class="subpanel">
+              <div class="subpanel-head"><label>Location</label></div>
               <div class="subpanel-row">
                 <span class="row-label">Edge</span>
                 <div class="btn-group" data-field="holeEdge" data-label="Location" data-options="holeEdge"></div>
@@ -749,6 +762,10 @@
                 <span class="row-label">Position</span>
                 <div class="btn-group" data-field="holePosition" data-label="Position" data-options="holePosition"></div>
               </div>
+            </div>
+            <div class="offset-box">
+              <span class="hint">Offset</span>
+              <div class="yn" data-field="holeOffset" data-label="Offset"><button type="button" class="yes">Yes</button></div>
             </div>
           </div>
           <div class="grid" style="margin-top:16px;">
@@ -1604,7 +1621,9 @@ var RFID_FAMILIES = {
 
   // ---- Conditional reveals ----
   var holeYN = document.querySelector('.yn[data-field="holePunch"]');
-  var holeField = document.getElementById('holePunchDetailsField');
+  var holeTypeItem = document.getElementById('holeTypeItem');
+  var holeOrientationItem = document.getElementById('holeOrientationItem');
+  var holeLocationWrap = document.getElementById('holeLocationWrap');
   var holeEdgeGroup = document.querySelector('.btn-group[data-field="holeEdge"]');
   var holePositionRow = document.getElementById('holePositionRow');
   var proofOptionsGroup = document.querySelector('.btn-group[data-field="proofOptions"]');
@@ -1632,7 +1651,12 @@ var RFID_FAMILIES = {
   var magStripeColorCustomField = document.getElementById('magStripeColorCustomField');
 
   function onFieldChange(field){
-    if (field === 'holePunch') holeField.style.display = (holeYN.value === 'Yes') ? 'block' : 'none';
+    if (field === 'holePunch') {
+      var punchOn = holeYN.value === 'Yes';
+      holeTypeItem.style.display = punchOn ? 'flex' : 'none';
+      holeOrientationItem.style.display = punchOn ? 'flex' : 'none';
+      holeLocationWrap.style.display = punchOn ? 'flex' : 'none';
+    }
     if (field === 'holeEdge') holePositionRow.style.display = holeEdgeGroup.value ? 'flex' : 'none';
     if (field === 'proofOptions') proofCustomField.style.display = (proofOptionsGroup.value === 'Customer Specific') ? 'flex' : 'none';
     if (field === 'silkFrontTarget') silkFrontScreenNumberField.style.display = (silkFrontTargetGroup.value === 'Archive') ? 'flex' : 'none';
