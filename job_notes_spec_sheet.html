@@ -529,6 +529,7 @@
               <div class="hint" id="dieFilesLabel" style="display:none; margin:10px 0 4px;">Files in this folder:</div>
               <div class="btn-group" id="dieNumberGroup" data-field="dieNumber" data-label="Die #"></div>
               <span class="hint" id="dieFolderStatus">No folder loaded yet — click "Load Dielines" and pick the Pocket Folders dieline folder.</span>
+              <div><button type="button" class="load-btn" id="btnReconnectDielines" style="display:none; margin-top:8px;">🔄 Reconnect Dielines Folder</button></div>
             </div>
           </div>
         </div>
@@ -1230,12 +1231,53 @@ var RFID_FAMILIES = {
   var dieBreadcrumb = document.getElementById('dieBreadcrumb');
   var dieFilesLabel = document.getElementById('dieFilesLabel');
   var dieFolderStatus = document.getElementById('dieFolderStatus');
+  var dieReconnectBtn = document.getElementById('btnReconnectDielines');
   dieNumberGroup.value = '';
   var dieTreeRoot = null;   // {name, files:[...], folders:[{...}, ...]} once loaded
   var dieCurrentPath = [];  // folder names from root to the folder being viewed
 
   function dieNaturalCompare(a, b){
     return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  }
+
+  // Chrome's built-in "remember this folder for next time" (the `id` option
+  // on showDirectoryPicker) doesn't reliably persist for a page opened as a
+  // local file — it falls back to the OS default (Documents) instead. So we
+  // persist the actual folder handle ourselves in IndexedDB and reuse it:
+  // silently on page load if permission is still granted, or via one click
+  // on "Reconnect" (a permission prompt, not a full folder browse) if not.
+  var DIE_DB_NAME = 'pfDielinesDB';
+  var DIE_STORE_NAME = 'handles';
+  var DIE_HANDLE_KEY = 'lastFolder';
+  function dieOpenDB(){
+    return new Promise(function(resolve, reject){
+      var req = indexedDB.open(DIE_DB_NAME, 1);
+      req.onupgradeneeded = function(){ req.result.createObjectStore(DIE_STORE_NAME); };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+  }
+  async function dieSaveHandle(handle){
+    try {
+      var db = await dieOpenDB();
+      await new Promise(function(resolve, reject){
+        var tx = db.transaction(DIE_STORE_NAME, 'readwrite');
+        tx.objectStore(DIE_STORE_NAME).put(handle, DIE_HANDLE_KEY);
+        tx.oncomplete = resolve;
+        tx.onerror = function(){ reject(tx.error); };
+      });
+    } catch (e) { /* persistence is a nice-to-have, not critical */ }
+  }
+  async function dieLoadSavedHandle(){
+    try {
+      var db = await dieOpenDB();
+      return await new Promise(function(resolve){
+        var tx = db.transaction(DIE_STORE_NAME, 'readonly');
+        var req = tx.objectStore(DIE_STORE_NAME).get(DIE_HANDLE_KEY);
+        req.onsuccess = function(){ resolve(req.result || null); };
+        req.onerror = function(){ resolve(null); };
+      });
+    } catch (e) { return null; }
   }
   async function readDieTree(dirHandle){
     var node = { name: dirHandle.name, files: [], folders: [] };
@@ -1380,44 +1422,83 @@ var RFID_FAMILIES = {
     renderDieBrowser();
   };
 
+  // Reads dirHandle's tree, re-validates any already-set die value against
+  // it, and updates the UI. Shared by a fresh pick, a manual reconnect, and
+  // the silent auto-restore on page load below.
+  async function loadDieTreeFromHandle(dirHandle){
+    dieTreeRoot = await readDieTree(dirHandle);
+    dieCurrentPath = [];
+    var total = countDieFiles(dieTreeRoot);
+    dieFolderStatus.textContent = 'Loaded ' + total + ' dielines from "' + dieTreeRoot.name + '".';
+    dieReconnectBtn.style.display = 'none';
+
+    var current = dieNumberGroup.value;
+    if (current) {
+      var path = findDiePath(dieTreeRoot, current, []);
+      if (path) {
+        dieCurrentPath = path;
+      } else {
+        dieNumberGroup.value = '';
+        dieNumberGroup.setAttribute('data-print-val', '—');
+        toast('Die "' + current + '" was not found in this folder — please re-select.');
+      }
+    }
+    renderDieBrowser();
+    updateSectionDots();
+    return total;
+  }
+
   async function loadDieFolder(){
     if (!window.showDirectoryPicker) {
       toast("This browser can't open folders directly — try Chrome or Edge.");
       return;
     }
     try {
-      // 'id' lets the browser remember whatever folder was picked under
-      // this same id and reopen the dialog there next time, instead of
-      // wherever it last happened to be — closest thing to a default
-      // location a webpage is allowed to set (see the note above).
       var dirHandle = await window.showDirectoryPicker({ id: 'pf-dielines' });
-      dieTreeRoot = await readDieTree(dirHandle);
-      dieCurrentPath = [];
-      var total = countDieFiles(dieTreeRoot);
-      dieFolderStatus.textContent = 'Loaded ' + total + ' dielines from "' + dieTreeRoot.name + '".';
-
-      var current = dieNumberGroup.value;
-      if (current) {
-        var path = findDiePath(dieTreeRoot, current, []);
-        if (path) {
-          dieCurrentPath = path;
-          toast('Loaded ' + total + ' dielines');
-        } else {
-          dieNumberGroup.value = '';
-          dieNumberGroup.setAttribute('data-print-val', '—');
-          toast('Die "' + current + '" was not found in this folder — please re-select.');
-        }
-      } else {
-        toast('Loaded ' + total + ' dielines');
-      }
-      renderDieBrowser();
-      updateSectionDots();
+      var total = await loadDieTreeFromHandle(dirHandle);
+      toast('Loaded ' + total + ' dielines');
+      dieSaveHandle(dirHandle);
     } catch (err) {
       if (err && err.name === 'AbortError') return;
       toast('Could not read that folder.');
     }
   }
   document.getElementById('btnLoadDielines').addEventListener('click', loadDieFolder);
+
+  dieReconnectBtn.addEventListener('click', async function(){
+    var saved = await dieLoadSavedHandle();
+    if (!saved) { dieReconnectBtn.style.display = 'none'; return; }
+    try {
+      var perm = await saved.requestPermission({ mode: 'read' });
+      if (perm === 'granted') {
+        var total = await loadDieTreeFromHandle(saved);
+        toast('Reconnected — loaded ' + total + ' dielines');
+      } else {
+        toast('Permission was not granted for that folder.');
+      }
+    } catch (e) {
+      toast('Could not reconnect to that folder — try Load Dielines instead.');
+    }
+  });
+
+  // On page load, try to silently pick back up wherever was loaded last
+  // time — no dialog at all if the browser still considers permission
+  // granted; otherwise offer the one-click Reconnect button instead of
+  // making someone re-browse to the folder from scratch.
+  (async function autoRestoreDieFolder(){
+    if (!window.showDirectoryPicker) return;
+    var saved = await dieLoadSavedHandle();
+    if (!saved) return;
+    try {
+      var perm = await saved.queryPermission({ mode: 'read' });
+      if (perm === 'granted') {
+        await loadDieTreeFromHandle(saved);
+      } else {
+        dieReconnectBtn.style.display = 'inline-flex';
+        dieFolderStatus.textContent = 'Previously loaded "' + saved.name + '" — click Reconnect to use it again without browsing.';
+      }
+    } catch (e) { /* saved handle no longer valid; ignore */ }
+  })();
 
   // ---- Conditional reveals ----
   var holeYN = document.querySelector('.yn[data-field="holePunch"]');
