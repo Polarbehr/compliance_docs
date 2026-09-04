@@ -178,6 +178,20 @@
     cursor:pointer; font-family:inherit; white-space:nowrap; transition:background .15s;
   }
   .load-btn:hover{background:rgba(0,174,239,.16);}
+  .die-breadcrumb{display:flex;flex-wrap:wrap;align-items:center;gap:1px;margin-bottom:10px;}
+  .die-breadcrumb .crumb-btn{
+    background:none;border:none;padding:2px 5px;font-family:inherit;font-size:12px;font-weight:700;
+    color:var(--muted);cursor:pointer;border-radius:5px;
+  }
+  .die-breadcrumb .crumb-btn:last-child{color:var(--ink);}
+  .die-breadcrumb .crumb-btn:hover{background:#f4f1ea;}
+  .die-breadcrumb .crumb-sep{color:var(--line);font-size:12px;}
+  .die-change-btn{
+    padding:9px 14px; border-radius:9px; border:1.5px dashed var(--line);
+    background:none; color:var(--muted); font-weight:700; font-size:12.5px;
+    cursor:pointer; font-family:inherit;
+  }
+  .die-change-btn:hover{border-color:var(--bad); color:var(--bad);}
   .inline-yn{display:flex;align-items:center;gap:10px;}
   .inline-yn label{font-size:12.5px;font-weight:700;color:#3a3530;margin:0;white-space:nowrap;}
   .field input[type="text"],
@@ -510,6 +524,9 @@
                 <label>Die #</label>
                 <button type="button" class="load-btn" id="btnLoadDielines">🗂️ Load Dielines</button>
               </div>
+              <div class="die-breadcrumb" id="dieBreadcrumb" style="display:none;"></div>
+              <div class="btn-group" id="dieFolderGroup"></div>
+              <div class="hint" id="dieFilesLabel" style="display:none; margin:10px 0 4px;">Files in this folder:</div>
               <div class="btn-group" id="dieNumberGroup" data-field="dieNumber" data-label="Die #"></div>
               <span class="hint" id="dieFolderStatus">No folder loaded yet — click "Load Dielines" and pick the Pocket Folders dieline folder.</span>
             </div>
@@ -1203,45 +1220,164 @@ var RFID_FAMILIES = {
   };
   selectRfidFamily(null);
 
-  // ---- Die #: load dieline filenames from a folder the user picks, one
-  // button per file (extension stripped). dieNumberGroup is a single
-  // persistent element like rfidTypeGroup above, so it's always in the
-  // document for allFieldEls()/collectData()/applyData() to find, even
-  // before any folder has been picked this session.
+  // ---- Die #: load a dieline folder the user picks, walk its entire
+  // subfolder tree in one pass (the picker's permission covers everything
+  // nested beneath the picked folder, no repeat prompts needed), and let
+  // people navigate it: folder buttons drill in, files in the current
+  // folder show as the actual Die # choices below them.
   var dieNumberGroup = document.getElementById('dieNumberGroup');
+  var dieFolderGroup = document.getElementById('dieFolderGroup');
+  var dieBreadcrumb = document.getElementById('dieBreadcrumb');
+  var dieFilesLabel = document.getElementById('dieFilesLabel');
   var dieFolderStatus = document.getElementById('dieFolderStatus');
   dieNumberGroup.value = '';
-  var dieFiles = null; // null = no folder picked yet this session
+  var dieTreeRoot = null;   // {name, files:[...], folders:[{...}, ...]} once loaded
+  var dieCurrentPath = [];  // folder names from root to the folder being viewed
 
-  function renderDieButtons(){
-    dieNumberGroup.innerHTML = '';
-    if (!dieFiles) return;
-    dieFiles.forEach(function(name){
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'opt' + (dieNumberGroup.value === name ? ' active' : '');
-      b.textContent = name;
-      b.addEventListener('click', function(){
-        var newVal = (dieNumberGroup.value === name) ? '' : name;
-        dieNumberGroup.value = newVal;
-        dieNumberGroup.setAttribute('data-print-val', newVal || '—');
-        renderDieButtons();
-        onFieldChange('dieNumber');
+  function dieNaturalCompare(a, b){
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  }
+  async function readDieTree(dirHandle){
+    var node = { name: dirHandle.name, files: [], folders: [] };
+    for await (var entry of dirHandle.values()) {
+      if (entry.kind === 'file') node.files.push(entry.name.replace(/\.[^.]+$/, ''));
+      else if (entry.kind === 'directory') node.folders.push(await readDieTree(entry));
+    }
+    node.files.sort(dieNaturalCompare);
+    node.folders.sort(function(a, b){ return dieNaturalCompare(a.name, b.name); });
+    return node;
+  }
+  function countDieFiles(node){
+    var count = node.files.length;
+    node.folders.forEach(function(f){ count += countDieFiles(f); });
+    return count;
+  }
+  // Depth-first search across the whole tree for a filename; returns the
+  // folder-path array to reach it, or null if it's nowhere in the tree.
+  function findDiePath(node, val, pathSoFar){
+    if (node.files.indexOf(val) !== -1) return pathSoFar;
+    for (var i = 0; i < node.folders.length; i++) {
+      var found = findDiePath(node.folders[i], val, pathSoFar.concat([node.folders[i].name]));
+      if (found) return found;
+    }
+    return null;
+  }
+  function currentDieNode(){
+    var node = dieTreeRoot;
+    for (var i = 0; node && i < dieCurrentPath.length; i++) {
+      node = node.folders.filter(function(f){ return f.name === dieCurrentPath[i]; })[0];
+    }
+    return node || dieTreeRoot;
+  }
+
+  function clearDieSelection(){
+    dieNumberGroup.value = '';
+    dieNumberGroup.setAttribute('data-print-val', '—');
+    renderDieBrowser();
+    onFieldChange('dieNumber');
+  }
+
+  // Once a die is picked, collapse the whole browser (breadcrumb, folder
+  // buttons, other files) down to just the selection, so a long dieline
+  // list doesn't stick around cluttering the section after the choice is
+  // made. "Change" reopens the full browser, right where it was picked.
+  function renderDieBrowser(){
+    var selected = dieNumberGroup.value;
+
+    if (selected) {
+      dieBreadcrumb.style.display = 'none';
+      dieFolderGroup.innerHTML = '';
+      dieFilesLabel.style.display = 'none';
+      dieNumberGroup.innerHTML = '';
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'opt active';
+      chip.textContent = selected;
+      chip.addEventListener('click', clearDieSelection);
+      dieNumberGroup.appendChild(chip);
+      var change = document.createElement('button');
+      change.type = 'button';
+      change.className = 'die-change-btn';
+      change.textContent = '✕ Change';
+      change.addEventListener('click', clearDieSelection);
+      dieNumberGroup.appendChild(change);
+      return;
+    }
+
+    dieBreadcrumb.innerHTML = '';
+    dieBreadcrumb.style.display = dieTreeRoot ? 'flex' : 'none';
+    if (dieTreeRoot) {
+      var crumbs = [dieTreeRoot.name].concat(dieCurrentPath);
+      crumbs.forEach(function(name, idx){
+        if (idx > 0) {
+          var sep = document.createElement('span');
+          sep.className = 'crumb-sep';
+          sep.textContent = '/';
+          dieBreadcrumb.appendChild(sep);
+        }
+        var link = document.createElement('button');
+        link.type = 'button';
+        link.className = 'crumb-btn';
+        link.textContent = name;
+        link.addEventListener('click', function(){
+          dieCurrentPath = crumbs.slice(1, idx + 1);
+          renderDieBrowser();
+        });
+        dieBreadcrumb.appendChild(link);
       });
-      dieNumberGroup.appendChild(b);
-    });
+    }
+
+    var node = dieTreeRoot ? currentDieNode() : null;
+
+    dieFolderGroup.innerHTML = '';
+    if (node) {
+      node.folders.forEach(function(sub){
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'opt fam-opt';
+        b.textContent = '📁 ' + sub.name;
+        b.addEventListener('click', function(){
+          dieCurrentPath = dieCurrentPath.concat([sub.name]);
+          renderDieBrowser();
+        });
+        dieFolderGroup.appendChild(b);
+      });
+    }
+
+    dieFilesLabel.style.display = (node && node.folders.length && node.files.length) ? 'block' : 'none';
+
+    dieNumberGroup.innerHTML = '';
+    if (node) {
+      node.files.forEach(function(name){
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'opt';
+        b.textContent = name;
+        b.addEventListener('click', function(){
+          dieNumberGroup.value = name;
+          dieNumberGroup.setAttribute('data-print-val', name);
+          renderDieBrowser();
+          onFieldChange('dieNumber');
+        });
+        dieNumberGroup.appendChild(b);
+      });
+    }
   }
 
   // Loading a draft before the folder has been picked this session just
-  // echoes the saved die name back at face value (no buttons to check it
+  // echoes the saved die name back at face value (no tree to check it
   // against yet) rather than flagging it as stale. Once the folder is
   // actually loaded, that value gets checked for real — see loadDieFolder.
   dieNumberGroup._setVal = function(val){
     val = val || '';
-    if (dieFiles && val && dieFiles.indexOf(val) === -1) val = '';
+    if (dieTreeRoot && val) {
+      var path = findDiePath(dieTreeRoot, val, []);
+      if (path) dieCurrentPath = path;
+      else val = '';
+    }
     dieNumberGroup.value = val;
     dieNumberGroup.setAttribute('data-print-val', val || '—');
-    renderDieButtons();
+    renderDieBrowser();
   };
 
   async function loadDieFolder(){
@@ -1250,24 +1386,31 @@ var RFID_FAMILIES = {
       return;
     }
     try {
-      var dirHandle = await window.showDirectoryPicker();
-      var names = [];
-      for await (var entry of dirHandle.values()) {
-        if (entry.kind === 'file') names.push(entry.name.replace(/\.[^.]+$/, ''));
-      }
-      names.sort(function(a, b){ return a.localeCompare(b, undefined, {numeric:true}); });
-      dieFiles = names;
-      dieFolderStatus.textContent = 'Loaded ' + dieFiles.length + ' dielines from "' + dirHandle.name + '".';
+      // 'id' lets the browser remember whatever folder was picked under
+      // this same id and reopen the dialog there next time, instead of
+      // wherever it last happened to be — closest thing to a default
+      // location a webpage is allowed to set (see the note above).
+      var dirHandle = await window.showDirectoryPicker({ id: 'pf-dielines' });
+      dieTreeRoot = await readDieTree(dirHandle);
+      dieCurrentPath = [];
+      var total = countDieFiles(dieTreeRoot);
+      dieFolderStatus.textContent = 'Loaded ' + total + ' dielines from "' + dieTreeRoot.name + '".';
 
       var current = dieNumberGroup.value;
-      if (current && dieFiles.indexOf(current) === -1) {
-        dieNumberGroup.value = '';
-        dieNumberGroup.setAttribute('data-print-val', '—');
-        toast('Die "' + current + '" was not found in this folder — please re-select.');
+      if (current) {
+        var path = findDiePath(dieTreeRoot, current, []);
+        if (path) {
+          dieCurrentPath = path;
+          toast('Loaded ' + total + ' dielines');
+        } else {
+          dieNumberGroup.value = '';
+          dieNumberGroup.setAttribute('data-print-val', '—');
+          toast('Die "' + current + '" was not found in this folder — please re-select.');
+        }
       } else {
-        toast('Loaded ' + dieFiles.length + ' dielines');
+        toast('Loaded ' + total + ' dielines');
       }
-      renderDieButtons();
+      renderDieBrowser();
       updateSectionDots();
     } catch (err) {
       if (err && err.name === 'AbortError') return;
