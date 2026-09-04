@@ -1268,42 +1268,48 @@ var RFID_FAMILIES = {
     if (el.getAttribute('data-field') === 'bleeds') return 'None';
     return '—';
   }
-  function twoColumnLines(pairs){
-    var COL_WIDTH = 44;
-    var lines = [];
-    for (var i = 0; i < pairs.length; i += 2) {
-      var left = pairs[i];
-      var leftText = left.label + ': ' + (left.value || left.fallback);
-      var right = pairs[i + 1];
-      if (right) {
-        var rightText = right.label + ': ' + (right.value || right.fallback);
-        lines.push(padCol(leftText, COL_WIDTH) + rightText);
-      } else {
-        lines.push(leftText);
-      }
-    }
+  // Renders one section as a self-contained block of lines (header + one
+  // "Label: Value" line per field) — never split apart once built.
+  function sectionBlockLines(card){
+    var fields = card.querySelectorAll('[data-field]');
+    var title = card.querySelector('h2').textContent;
+    var lines = ['== ' + title.toUpperCase() + ' =='];
+    Array.prototype.forEach.call(fields, function(el){
+      var label = el.getAttribute('data-label');
+      var val = getValue(el).trim();
+      lines.push(label + ': ' + (val || fallbackFor(el)));
+    });
     return lines;
   }
 
   function buildSummaryText(){
-    var lines = [];
-    lines.push('PRESS JOB SPEC SHEET');
-    lines.push('Generated: ' + new Date().toLocaleString());
-    lines.push('');
     var order = ['sec-job','sec-proof','sec-callouts','sec-art','sec-tooling','sec-rfid','sec-magenc','sec-stock','sec-press','sec-silk','sec-finish','sec-ship'];
+
+    // Assign whole sections to whichever column is currently shorter, so a
+    // section's lines always stay together — columns end up uneven in
+    // length rather than ever splitting a section between them.
+    var colA = [], colB = [];
     order.forEach(function(secId){
       var card = document.getElementById(secId);
       if (card.hidden) return;
       var fields = card.querySelectorAll('[data-field]');
       if (!fields.length) return;
-      var title = card.querySelector('h2').textContent;
-      lines.push('== ' + title.toUpperCase() + ' ==');
-      var pairs = Array.prototype.map.call(fields, function(el){
-        return { label: el.getAttribute('data-label'), value: getValue(el).trim(), fallback: fallbackFor(el) };
-      });
-      lines = lines.concat(twoColumnLines(pairs));
-      lines.push('');
+      var block = sectionBlockLines(card);
+      block.push('');
+      if (colA.length <= colB.length) colA = colA.concat(block);
+      else colB = colB.concat(block);
     });
+
+    var COL_WIDTH = 48;
+    var rows = [];
+    var rowCount = Math.max(colA.length, colB.length);
+    for (var i = 0; i < rowCount; i++) {
+      var left = colA[i] || '';
+      var right = colB[i] || '';
+      rows.push(right ? padCol(left, COL_WIDTH) + right : left);
+    }
+
+    var lines = ['PRESS JOB SPEC SHEET', 'Generated: ' + new Date().toLocaleString(), ''].concat(rows);
 
     var notesCard = document.getElementById('sec-notes');
     if (!notesCard.hidden) {
