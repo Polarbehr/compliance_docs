@@ -1,7 +1,7 @@
 Option Explicit
 
 ' =============================================================================
-' PLI PERSO WORKBOOK -- Module1 (v3.13, 2026-09-03)
+' PLI PERSO WORKBOOK -- Module1 (v3.14, 2026-09-03)
 '
 ' The version is ALSO held in the MODULE_VERSION constant below and printed at
 ' the end of every Update Data run, so the build a workbook is actually running
@@ -13,6 +13,29 @@ Option Explicit
 '   ---------------------------------------------------------------------
 '   REVISION HISTORY
 '   ---------------------------------------------------------------------
+'   v3.14  2026-09-03
+'       * AutoFilter removed from the Tracie header row (user request:
+'         the dropdown arrows were not wanted). Nothing in this module
+'         reads the filter, and filtering breaks the machine grouping the
+'         sheet is laid out to show. Turned OFF explicitly, not merely
+'         left unset, so a filter from an earlier build does not keep its
+'         arrows forever.
+'       * THIRD go at the spacer-row checkboxes, after v3.11 (ClearFormats)
+'         and v3.13 (clone a clean format over it) both failed against the
+'         live workbook. Both were guesses at which mechanism Excel is
+'         using; this one stops guessing and covers every candidate at
+'         once -- full Clear, NumberFormat reset, black fill restored, AND
+'         removal of any Form Control / ActiveX checkbox SHAPE anchored on
+'         a spacer row. Shapes are the one candidate neither earlier fix
+'         could ever have touched, and they fit the symptom exactly: a
+'         shape is positioned by geometry, so one parked over a job row on
+'         a previous run sits over a spacer row after a rebuild changes
+'         the row count.
+'       * NEW, manual: DiagnoseTracieCheckboxes (Alt+F8). Read-only. If a
+'         box still survives, this reports what is actually on a spacer
+'         row's Rdy cell -- value, number format, validation, CellControl,
+'         and any anchored shapes -- so the next fix is aimed instead of
+'         guessed. Two wrong guesses is enough.
 '   v3.13  2026-09-03
 '       * v3.11's spacer-row checkbox fix did not actually work (confirmed
 '         by the user) -- ClearFormats does not remove whatever
@@ -279,8 +302,10 @@ Private Const STALE_HUB_HOURS As Double = 12#
 '         and everything after Rdy shifted one column left
 '   v3.11 First (unsuccessful) attempt at the spacer-row checkbox fix
 '   v3.12 Fixed: stray dates in K1:K5 -- column K purge now clears content
-'   v3.13 Fixed properly: spacer rows no longer show a Rdy checkbox
-Private Const MODULE_VERSION As String = "v3.13"
+'   v3.13 Second (also unsuccessful) attempt at the spacer-row checkbox
+'   v3.14 AutoFilter arrows removed; third spacer-row checkbox attempt,
+'         covering cell AND shape mechanisms; + DiagnoseTracieCheckboxes
+Private Const MODULE_VERSION As String = "v3.14"
 
 ' -----------------------------------------------------------------------------
 ' UPDATE DATA BUTTON -- second caption line and state colour (v3).
@@ -1057,28 +1082,63 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
 
     ' Strip the checkbox back off every spacer row's Rdy cell.
     '
-    ' 2026-09.03: ClearFormats (Press's proven fix for its own Remove
-    ' checkbox column, via CellControl.SetCheckbox) turned out NOT to
-    ' remove this workbook's checkbox -- Perso never calls CellControl at
-    ' all; every checkbox here, including the template at I2, was created
-    ' by hand in the Excel UI and only ever PROPAGATED by VBA via
-    ' PasteSpecial xlPasteFormats (see EnsureCheckboxFormats). ClearFormats
-    ' left it in place, confirmed by the user after the first attempt.
-    '
-    ' Fixed properly by not trying to SUBTRACT the checkbox at all: instead
-    ' each spacer row's OWN Machine cell (column 8) already has the exact
-    ' right look -- plain black fill, no checkbox, never had one -- because
-    ' it sits inside the same whole-row fill above. Cloning ITS format onto
-    ' the Rdy cell replaces whatever the checkbox paste left behind with a
-    ' known-good format, the same paste-cloning mechanism this workbook
-    ' already relies on everywhere else, rather than a removal API that
-    ' does not actually reach whatever PasteSpecial set.
+    ' 2026-09.03, THIRD attempt. The first two each assumed a mechanism and
+    ' each failed against the live workbook:
+    '   1. ClearFormats -- Press's proven fix for ITS Remove column. Press
+    '      creates those with CellControl.SetCheckbox; Perso never calls
+    '      CellControl at all, so that finding did not transfer.
+    '   2. Cloning the format from the same row's Machine cell (column 8),
+    '      on the theory that if PasteSpecial xlPasteFormats can ADD the
+    '      checkbox it can also overwrite it away. It cannot -- a formats
+    '      paste evidently applies what the source HAS rather than
+    '      clearing what it lacks.
+    ' Both were guesses at which of several mechanisms Excel is actually
+    ' using here, so this pass stops guessing and covers all of them. Run
+    ' DiagnoseTracieCheckboxes (Alt+F8) if a box ever survives this: it
+    ' reports exactly what is on a spacer row's Rdy cell.
     Dim sr As Variant
+    Dim shp As Shape, shpRow As Long
     For Each sr In sepRows
-        ws.Cells(CLng(sr), 8).Copy
-        ws.Cells(CLng(sr), 9).PasteSpecial xlPasteFormats
+        With ws.Cells(CLng(sr), 9)
+            ' Full Clear, not ClearFormats: contents, formats and notes.
+            .Clear
+            ' Explicit, in case the checkbox rides on the number format.
+            .NumberFormat = "General"
+            ' Restore the spacer's black fill, which Clear just wiped.
+            .Interior.Color = RGB(0, 0, 0)
+        End With
     Next sr
-    Application.CutCopyMode = False
+
+    ' ...and if the boxes are actually leftover Form Control / ActiveX
+    ' checkbox SHAPES from the original hand-built workbook rather than
+    ' cell-native ones, no amount of cell clearing would ever have touched
+    ' them -- shapes float above cells and survive ClearContents. They also
+    ' explain the symptom precisely: a shape parked over a job row on one
+    ' run sits over a spacer row on the next, because it is positioned by
+    ' geometry, not by what the row now holds. Only checkbox-type controls
+    ' sitting ON a spacer row are removed, never the user-owned Update Data
+    ' button and never a checkbox over a real job row.
+    On Error Resume Next
+    For Each shp In ws.Shapes
+        If shp.name <> BTN_NAME Then
+            shpRow = 0
+            shpRow = shp.TopLeftCell.Row
+            If shpRow > 1 Then
+                For Each sr In sepRows
+                    If shpRow = CLng(sr) Then
+                        If shp.Type = msoOLEControlObject Then
+                            shp.Delete
+                        ElseIf shp.Type = msoFormControl Then
+                            If shp.FormControlType = xlCheckBox Then shp.Delete
+                        End If
+                        Exit For
+                    End If
+                Next sr
+            End If
+        End If
+    Next shp
+    Err.Clear
+    On Error GoTo 0
 
     Dim lastRow As Long: lastRow = outRow - 1
 
@@ -1109,9 +1169,15 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
 
     FormatCapacityTable ws, roster
 
-    ' Explicit range (not Rows(1).AutoFilter) so the blank spacer rows can't
-    ' truncate the filter -- same lesson as the Press tabs.
-    ws.Range(ws.Cells(1, 1), ws.Cells(IIf(lastRow >= 2, lastRow, 1), UBound(headers) + 1)).AutoFilter
+    ' NO AutoFilter (2026-09.03, user request: "Each of the header rows has
+    ' a drop down arrow like a table. If they are not needed remove them.").
+    ' Nothing in this module reads or depends on the filter -- it was purely
+    ' a UI affordance, and on a sheet that is grouped by machine with black
+    ' spacer rows, filtering breaks the grouping it is laid out to show.
+    ' Turned OFF explicitly rather than just not set: a filter applied by an
+    ' earlier build (or by hand) survives ClearContents and would otherwise
+    ' keep its arrows forever.
+    ws.AutoFilterMode = False
 
     On Error Resume Next
     ws.Activate
@@ -2563,6 +2629,109 @@ Public Sub DiagnosePersoButton()
     On Error GoTo 0
 
     MsgBox rpt, vbInformation, "Diagnose Button"
+End Sub
+
+' =============================================================================
+' DIAGNOSE THE Rdy CHECKBOXES (2026-09.03) -- Alt+F8, manual, read-only.
+'
+' Two fixes for "checkboxes in the black spacer rows" each assumed a
+' different mechanism and each failed, because there is no way to tell from
+' outside Excel which one this workbook actually uses: a cell-native
+' checkbox (the modern in-cell control), a leftover Form Control or ActiveX
+' checkbox SHAPE from the original hand-built file, or something riding on
+' the number format. Nothing here changes anything -- it reports what is
+' really on the first black spacer row it finds, so the next fix is aimed
+' rather than guessed.
+'
+' A spacer row is identified the way the rest of this module does: inside
+' the data block, with a blank Job ID (column C).
+' =============================================================================
+Public Sub DiagnoseTracieCheckboxes()
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Sheets(OUT_SHEET)
+    On Error GoTo 0
+    If ws Is Nothing Then
+        MsgBox "No '" & OUT_SHEET & "' sheet in this workbook.", vbExclamation, "Diagnose Checkboxes"
+        Exit Sub
+    End If
+
+    Dim lastRow As Long
+    lastRow = ws.Cells(ws.Rows.Count, 3).End(xlUp).Row
+
+    ' First spacer row: blank Job ID, black fill, inside the data block.
+    Dim r As Long, sepRow As Long
+    For r = 2 To lastRow
+        If Trim(CStr(ws.Cells(r, 3).Value)) = "" Then
+            sepRow = r
+            Exit For
+        End If
+    Next r
+
+    Dim rpt As String
+    rpt = "Tracie checkbox diagnosis" & vbCrLf & _
+          "Module " & MODULE_VERSION & vbCrLf & vbCrLf & _
+          "Last job row (col C): " & lastRow & vbCrLf
+
+    If sepRow = 0 Then
+        rpt = rpt & vbCrLf & "No spacer row found (every row 2.." & lastRow & _
+              " has a Job ID). If you can see a black row, tell me its row number."
+        MsgBox rpt, vbInformation, "Diagnose Checkboxes"
+        Exit Sub
+    End If
+
+    rpt = rpt & "First spacer row: " & sepRow & vbCrLf & vbCrLf
+
+    ' --- what is in / on the Rdy cell of that row -----------------------
+    Dim cel As Range
+    Set cel = ws.Cells(sepRow, 9)
+    rpt = rpt & "Rdy cell " & cel.Address(False, False) & vbCrLf & _
+          "  value      : " & IIf(IsEmpty(cel.Value), "(empty)", CStr(cel.Value)) & vbCrLf & _
+          "  IsEmpty    : " & IsEmpty(cel.Value) & vbCrLf & _
+          "  NumberFmt  : " & cel.NumberFormat & vbCrLf & _
+          "  Interior   : " & cel.Interior.Color & " (black = 0)" & vbCrLf
+
+    Dim hasVal As String: hasVal = "none"
+    On Error Resume Next
+    Err.Clear
+    hasVal = "type " & CStr(cel.Validation.Type)
+    If Err.Number <> 0 Then hasVal = "none"
+    Err.Clear
+    On Error GoTo 0
+    rpt = rpt & "  Validation : " & hasVal & vbCrLf
+
+    Dim hasCtl As String: hasCtl = "not reachable"
+    On Error Resume Next
+    Err.Clear
+    If Not cel.CellControl Is Nothing Then hasCtl = "PRESENT"
+    If Err.Number <> 0 Then hasCtl = "not reachable (err " & Err.Number & ")"
+    Err.Clear
+    On Error GoTo 0
+    rpt = rpt & "  CellControl: " & hasCtl & vbCrLf
+
+    ' --- any shape sitting on that row ---------------------------------
+    Dim shp As Shape, shpRow As Long, nShapes As Long
+    rpt = rpt & vbCrLf & "Shapes anchored on row " & sepRow & ":" & vbCrLf
+    On Error Resume Next
+    For Each shp In ws.Shapes
+        shpRow = 0
+        shpRow = shp.TopLeftCell.Row
+        If shpRow = sepRow Then
+            nShapes = nShapes + 1
+            rpt = rpt & "  " & shp.name & " | Type " & shp.Type & _
+                  IIf(shp.Type = msoFormControl, " (FormControl " & shp.FormControlType & ")", "") & _
+                  " | col " & shp.TopLeftCell.Column & vbCrLf
+        End If
+    Next shp
+    Err.Clear
+    On Error GoTo 0
+    If nShapes = 0 Then rpt = rpt & "  (none)" & vbCrLf
+    rpt = rpt & "  Total shapes on sheet: " & ws.Shapes.Count & vbCrLf
+
+    rpt = rpt & vbCrLf & "Send this whole box back and the fix can be aimed at " & _
+          "whichever of these is actually holding the checkbox."
+
+    MsgBox rpt, vbInformation, "Diagnose Checkboxes"
 End Sub
 
 ' Reads "<key><digits>" out of the button's AlternativeText tag, or -1.
