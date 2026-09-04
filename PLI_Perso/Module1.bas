@@ -1,7 +1,7 @@
 Option Explicit
 
 ' =============================================================================
-' PLI PERSO WORKBOOK -- Module1 (v3.14, 2026-09-03)
+' PLI PERSO WORKBOOK -- Module1 (v3.15, 2026-09-03)
 '
 ' The version is ALSO held in the MODULE_VERSION constant below and printed at
 ' the end of every Update Data run, so the build a workbook is actually running
@@ -13,6 +13,24 @@ Option Explicit
 '   ---------------------------------------------------------------------
 '   REVISION HISTORY
 '   ---------------------------------------------------------------------
+'   v3.15  2026-09-03
+'       * Spacer-row checkboxes FIXED, this time from evidence rather than
+'         from a guess. DiagnoseTracieCheckboxes on the live sheet reported
+'         for spacer cell I5: value empty, NumberFmt General, Interior
+'         black, Validation none, no shapes on the row (1 on the whole
+'         sheet -- the Update Data button), and CellControl: PRESENT.
+'         So the box is a cell-native CellControl that survives BOTH
+'         ClearFormats (v3.11) and a full Clear (v3.14), and is not a
+'         shape (v3.14's other branch, now removed as dead code). It is
+'         removed through the CellControl API itself -- see the new
+'         RemoveCellCheckbox, which is late-bound and verifies the control
+'         is actually gone rather than assuming the call worked, and which
+'         reports into gSetupWarnings if it ever cannot.
+'       * Same bug fixed in EnsureCheckboxFormats' below-the-data trim,
+'         which has been calling ClearFormats since the feature shipped and
+'         therefore never actually removed a checkbox in its life. Live
+'         boxes have been accumulating below the data footprint that whole
+'         time; they get cleared properly now.
 '   v3.14  2026-09-03
 '       * AutoFilter removed from the Tracie header row (user request:
 '         the dropdown arrows were not wanted). Nothing in this module
@@ -305,7 +323,10 @@ Private Const STALE_HUB_HOURS As Double = 12#
 '   v3.13 Second (also unsuccessful) attempt at the spacer-row checkbox
 '   v3.14 AutoFilter arrows removed; third spacer-row checkbox attempt,
 '         covering cell AND shape mechanisms; + DiagnoseTracieCheckboxes
-Private Const MODULE_VERSION As String = "v3.14"
+'   v3.15 Spacer-row checkboxes fixed for real, from the diagnostic's
+'         evidence: removed via the CellControl API, the only thing that
+'         touches them. Same fix applied below the data footprint.
+Private Const MODULE_VERSION As String = "v3.15"
 
 ' -----------------------------------------------------------------------------
 ' UPDATE DATA BUTTON -- second caption line and state colour (v3).
@@ -1082,63 +1103,45 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
 
     ' Strip the checkbox back off every spacer row's Rdy cell.
     '
-    ' 2026-09.03, THIRD attempt. The first two each assumed a mechanism and
-    ' each failed against the live workbook:
-    '   1. ClearFormats -- Press's proven fix for ITS Remove column. Press
-    '      creates those with CellControl.SetCheckbox; Perso never calls
-    '      CellControl at all, so that finding did not transfer.
-    '   2. Cloning the format from the same row's Machine cell (column 8),
-    '      on the theory that if PasteSpecial xlPasteFormats can ADD the
-    '      checkbox it can also overwrite it away. It cannot -- a formats
-    '      paste evidently applies what the source HAS rather than
-    '      clearing what it lacks.
-    ' Both were guesses at which of several mechanisms Excel is actually
-    ' using here, so this pass stops guessing and covers all of them. Run
-    ' DiagnoseTracieCheckboxes (Alt+F8) if a box ever survives this: it
-    ' reports exactly what is on a spacer row's Rdy cell.
+    ' 2026-09.03 -- settled by DiagnoseTracieCheckboxes against the live
+    ' sheet, after two fixes that each guessed a mechanism and each failed.
+    ' What the diagnostic reported for a spacer row's Rdy cell (I5):
+    '     value (empty) | NumberFmt General | Interior 0 (black)
+    '     Validation none | Shapes on the row: none (1 on the whole sheet,
+    '     the Update Data button) | CellControl: PRESENT
+    ' So the box is a cell-native CellControl, and it survives BOTH
+    ' ClearFormats and a full Clear -- the cell was already emptied, already
+    ' General, already black, and the box was still there. Press's inherited
+    ' "ClearFormats is the only way to take a cell control off" simply does
+    ' not hold here. The only thing that can remove it is the CellControl
+    ' API itself; see RemoveCellCheckbox.
+    '
+    ' Done as ONE call over a Union of every spacer cell rather than a loop:
+    ' CellControl works on a multi-cell range (it is how EnsureCheckboxFormats'
+    ' counterpart in Press sets a whole column span at once).
     Dim sr As Variant
-    Dim shp As Shape, shpRow As Long
+    Dim sepCells As Range
     For Each sr In sepRows
-        With ws.Cells(CLng(sr), 9)
-            ' Full Clear, not ClearFormats: contents, formats and notes.
-            .Clear
-            ' Explicit, in case the checkbox rides on the number format.
-            .NumberFormat = "General"
-            ' Restore the spacer's black fill, which Clear just wiped.
-            .Interior.Color = RGB(0, 0, 0)
-        End With
+        If sepCells Is Nothing Then
+            Set sepCells = ws.Cells(CLng(sr), 9)
+        Else
+            Set sepCells = Union(sepCells, ws.Cells(CLng(sr), 9))
+        End If
     Next sr
 
-    ' ...and if the boxes are actually leftover Form Control / ActiveX
-    ' checkbox SHAPES from the original hand-built workbook rather than
-    ' cell-native ones, no amount of cell clearing would ever have touched
-    ' them -- shapes float above cells and survive ClearContents. They also
-    ' explain the symptom precisely: a shape parked over a job row on one
-    ' run sits over a spacer row on the next, because it is positioned by
-    ' geometry, not by what the row now holds. Only checkbox-type controls
-    ' sitting ON a spacer row are removed, never the user-owned Update Data
-    ' button and never a checkbox over a real job row.
-    On Error Resume Next
-    For Each shp In ws.Shapes
-        If shp.name <> BTN_NAME Then
-            shpRow = 0
-            shpRow = shp.TopLeftCell.Row
-            If shpRow > 1 Then
-                For Each sr In sepRows
-                    If shpRow = CLng(sr) Then
-                        If shp.Type = msoOLEControlObject Then
-                            shp.Delete
-                        ElseIf shp.Type = msoFormControl Then
-                            If shp.FormControlType = xlCheckBox Then shp.Delete
-                        End If
-                        Exit For
-                    End If
-                Next sr
-            End If
+    If Not sepCells Is Nothing Then
+        If Not RemoveCellCheckbox(sepCells) Then
+            gSetupWarnings = gSetupWarnings & vbCrLf & _
+                "- The Rdy checkboxes on the black spacer rows could not be removed. " & _
+                "Run DiagnoseTracieCheckboxes (Alt+F8) and send the result on."
         End If
-    Next shp
-    Err.Clear
-    On Error GoTo 0
+        ' The checkbox paste in EnsureCheckboxFormats also brought the
+        ' template cell's own look with it; the spacer's black fill was
+        ' painted over that during the loop above, so only re-assert the
+        ' pieces the control could have carried.
+        sepCells.NumberFormat = "General"
+        sepCells.Interior.Color = RGB(0, 0, 0)
+    End If
 
     Dim lastRow As Long: lastRow = outRow - 1
 
@@ -1561,12 +1564,106 @@ Private Sub EnsureCheckboxFormats(ByRef ws As Worksheet, ByVal lastDataRow As Lo
     ' the $G$2:$G$5000 bound v2 removed from the capacity formulas.
     ' UsedRange is the right bound here because it counts cells that carry
     ' FORMATTING but no value -- which is precisely what is being cleaned.
+    '
+    ' 2026-09.03: ClearFormats alone never actually did this job. The
+    ' checkbox is a cell-native CellControl and ClearFormats does not touch
+    ' it (proven by DiagnoseTracieCheckboxes -- see the note in
+    ' BuildTracieTab), so every run since this feature shipped has been
+    ' leaving live checkboxes below the data. RemoveCellCheckbox first,
+    ' then ClearFormats for everything else that IS a format.
     Dim clearTo As Long
     clearTo = ws.UsedRange.Row + ws.UsedRange.Rows.Count - 1
     If clearTo > lastDataRow Then
-        ws.Range(ws.Cells(lastDataRow + 1, 9), ws.Cells(clearTo, 9)).ClearFormats
+        Dim tail As Range
+        Set tail = ws.Range(ws.Cells(lastDataRow + 1, 9), ws.Cells(clearTo, 9))
+        RemoveCellCheckbox tail
+        tail.ClearFormats
     End If
 End Sub
+
+' =============================================================================
+' REMOVE AN IN-CELL CHECKBOX (2026-09.03)
+'
+' The one thing that actually removes this workbook's checkboxes. They are
+' cell-native CellControls: ClearFormats does not remove them, a full Clear
+' does not remove them, and pasting a checkbox-free format over them does
+' not remove them either -- all three were tried against the live sheet and
+' all three left CellControl reporting PRESENT.
+'
+' Every call is LATE-BOUND on purpose. CellControl only exists on recent
+' builds of Excel, and the method that clears one is not something this can
+' verify from here, so a name this Excel does not have has to be a catchable
+' runtime error rather than a compile error that would break the whole
+' module. SetNone is the documented counterpart to the SetCheckbox that
+' Press uses; the rest are tried in case this build names it differently,
+' and each attempt is verified by re-reading the control rather than
+' assumed to have worked.
+'
+' Returns True if the range ends up with no checkbox -- including on an
+' Excel too old to have CellControl at all, which therefore cannot have put
+' one there in the first place.
+' =============================================================================
+Private Function RemoveCellCheckbox(ByRef target As Range) As Boolean
+    If target Is Nothing Then
+        RemoveCellCheckbox = True
+        Exit Function
+    End If
+
+    Dim cc As Object
+    On Error Resume Next
+
+    Set cc = Nothing
+    Err.Clear
+    Set cc = target.CellControl
+    If Err.Number <> 0 Or cc Is Nothing Then
+        Err.Clear
+        On Error GoTo 0
+        RemoveCellCheckbox = True
+        Exit Function
+    End If
+
+    Err.Clear: cc.SetNone
+    If Not CellCheckboxGone(target) Then Err.Clear: cc.Remove
+    If Not CellCheckboxGone(target) Then Err.Clear: cc.Delete
+    If Not CellCheckboxGone(target) Then Err.Clear: cc.Clear
+    Err.Clear
+    On Error GoTo 0
+
+    RemoveCellCheckbox = CellCheckboxGone(target)
+End Function
+
+' True when the range carries no in-cell checkbox: either no CellControl at
+' all, or one whose Type reads as none (0). Both are checked because a build
+' may hand back a live object that merely describes an empty control rather
+' than dropping the object entirely.
+Private Function CellCheckboxGone(ByRef target As Range) As Boolean
+    Dim cc As Object
+    Dim t As Variant
+
+    CellCheckboxGone = True
+    On Error Resume Next
+
+    Set cc = Nothing
+    Err.Clear
+    Set cc = target.CellControl
+    If Err.Number <> 0 Or cc Is Nothing Then
+        Err.Clear
+        On Error GoTo 0
+        Exit Function
+    End If
+
+    t = Empty
+    Err.Clear
+    t = cc.Type
+    If Err.Number = 0 Then
+        If Not IsEmpty(t) Then CellCheckboxGone = (CLng(t) = 0)
+    Else
+        CellCheckboxGone = False
+    End If
+
+    Err.Clear
+    On Error GoTo 0
+End Function
 
 ' =============================================================================
 ' PREFERENCES -- same label-anchored, self-healing pattern as Hub/Press.
@@ -2701,10 +2798,25 @@ Public Sub DiagnoseTracieCheckboxes()
     rpt = rpt & "  Validation : " & hasVal & vbCrLf
 
     Dim hasCtl As String: hasCtl = "not reachable"
+    Dim cc As Object, ccType As Variant
     On Error Resume Next
     Err.Clear
-    If Not cel.CellControl Is Nothing Then hasCtl = "PRESENT"
-    If Err.Number <> 0 Then hasCtl = "not reachable (err " & Err.Number & ")"
+    Set cc = cel.CellControl
+    If Err.Number <> 0 Then
+        hasCtl = "not reachable (err " & Err.Number & ")"
+    ElseIf cc Is Nothing Then
+        hasCtl = "none"
+    Else
+        hasCtl = "PRESENT"
+        ccType = Empty
+        Err.Clear
+        ccType = cc.Type
+        If Err.Number = 0 Then
+            hasCtl = hasCtl & ", Type " & CStr(ccType) & " (0 = none)"
+        Else
+            hasCtl = hasCtl & ", Type unreadable (err " & Err.Number & ")"
+        End If
+    End If
     Err.Clear
     On Error GoTo 0
     rpt = rpt & "  CellControl: " & hasCtl & vbCrLf
