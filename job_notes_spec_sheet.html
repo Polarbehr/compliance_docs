@@ -496,10 +496,8 @@
       <section class="card" id="sec-tooling">
         <div class="head"><div class="ic c5">🔩</div><div><h2>Tooling &amp; Die</h2><p>Mechanical specs for the die.</p></div></div>
         <div class="body">
-          <div class="grid cols-3">
+          <div class="grid">
             <div class="field"><label>Die #</label><input type="text" data-field="dieNumber" data-label="Die #"></div>
-            <div class="field"><label>Size</label><input type="text" data-field="size" data-label="Size" placeholder="e.g. 12oz, 4.5 x 8 in"></div>
-            <div class="field"><label>Thickness</label><input type="text" data-field="thickness" data-label="Thickness" placeholder="e.g. .014&quot;"></div>
           </div>
         </div>
       </section>
@@ -1002,7 +1000,7 @@ var RFID_FAMILIES = {
     'sec-proof':    ['proofOptions','proofAttention','signOffDate','proofCustomDetails'],
     'sec-callouts': ['pliOnBack','arrow','pcNumber'],
     'sec-art':      ['frontArt','backArt','frontArtPrevRef','backArtPrevRef'],
-    'sec-tooling':  ['dieNumber','size','thickness'],
+    'sec-tooling':  ['dieNumber'],
     'sec-rfid':     ['rfidInlayType','vingEncoding','uidRead','returnFile','lockSystem','lockSystemTech'],
     'sec-magenc':   ['magEncodingType','magTracks','magLockType','magStripeColor','magEncodingDetails'],
     'sec-stock':    ['stock','stockColor'],
