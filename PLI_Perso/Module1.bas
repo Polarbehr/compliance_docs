@@ -1,7 +1,7 @@
 Option Explicit
 
 ' =============================================================================
-' PLI PERSO WORKBOOK -- Module1 (v3.9, 2026-09-03)
+' PLI PERSO WORKBOOK -- Module1 (v3.10, 2026-09-03)
 '
 ' The version is ALSO held in the MODULE_VERSION constant below and printed at
 ' the end of every Update Data run, so the build a workbook is actually running
@@ -13,6 +13,20 @@ Option Explicit
 '   ---------------------------------------------------------------------
 '   REVISION HISTORY
 '   ---------------------------------------------------------------------
+'   v3.10  2026-09-03
+'       * Cards removed (not needed any more, per the user). Snapshot/
+'         restore, checkbox-format cloning, headers, and the hide-blank-
+'         text CF rule all simplified from a Cards+Rdy pair down to Rdy
+'         alone; every column from Rdy onward (Week Start, the K-purge
+'         column, the capacity table, the Update Data button's parked
+'         position) shifted one column LEFT to close the gap.
+'       * Week Start no longer shown -- not removed, HIDDEN
+'         (ws.Columns(...).Hidden = True), because the odd-week-bold
+'         conditional format still reads it. Same one-time transition
+'         cost as before applies to the Rdy tick restore (see the v3.8
+'         note): the very first run after this update reads last run's
+'         Cards-column leftovers at Rdy's new position and won't match,
+'         so every job's Rdy comes back unticked once.
 '   v3.9  2026-09-03
 '       * Ship Date and To Perso swapped back: Ship Date is column A again,
 '         To Perso is B. Only those two columns' positions changed --
@@ -107,8 +121,11 @@ Option Explicit
 ' the Press workbook (same Hub Workbook Path preference, same Hub Status
 ' gate: REFRESHING/ERROR block the pull, READY proceeds) -- then rebuilds
 ' the "Tracie" tab: Personalization/Thermal jobs grouped by machine with a
-' short display name, Monday Week Start, Cards/Rdy checkmark columns, and
-' per-machine row colors driven by the Preferences Machine Roster.
+' short display name, a Rdy checkmark column, a hidden Monday Week Start
+' column (kept for the odd-week-bold formatting rule, not for viewing --
+' see BuildTracieTab), and per-machine row colors driven by the
+' Preferences Machine Roster. Cards was removed 2026-09.03 (not needed
+' any more, per the user).
 '
 ' This module REPLACES the workbook's original Power Query chain
 ' (Monarch Import -> ConvertRawEmail -> Tracie query). The query rules it
@@ -130,8 +147,9 @@ Option Explicit
 '   - One blank spacer row (filled black) between machine groups.
 '
 ' Improvements over the query version, per the user's 2026-08.12 request:
-'   - Cards/Rdy values now SURVIVE a refresh (the query wiped them every
-'     run): preserved across updates keyed on Job ID + Machine.
+'   - Rdy values now SURVIVE a refresh (the query wiped them every run):
+'     preserved across updates keyed on Job ID + Machine. (Cards got the
+'     same treatment until it was removed 2026-09.03.)
 '   - Conditional formatting is VBA-managed: rebuilt on every run from the
 '     Machine Roster's Row Color cells (paint a roster color cell any fill
 '     you like and the machine's rows follow on the next update). Also
@@ -230,7 +248,9 @@ Private Const STALE_HUB_HOURS As Double = 12#
 '   v3.8  + To Perso column inserted before Ship Date; every column
 '         reference after it shifted right by one
 '   v3.9  Ship Date and To Perso swapped back (A/B), nothing else moved
-Private Const MODULE_VERSION As String = "v3.9"
+'   v3.10 Cards removed; Week Start hidden, not removed; capacity table
+'         and everything after Rdy shifted one column left
+Private Const MODULE_VERSION As String = "v3.10"
 
 ' -----------------------------------------------------------------------------
 ' UPDATE DATA BUTTON -- second caption line and state colour (v3).
@@ -768,8 +788,11 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
     exclList = ReadLabeledList("Location Exclude")
     exceptList = ReadLabeledList("Location Exclude Exceptions")
 
-    ' ---- 1. Snapshot Cards/Rdy so they survive the rebuild (query never
-    ' did this -- user-requested improvement). Keyed Job ID + "|" + Machine.
+    ' ---- 1. Snapshot Rdy so it survives the rebuild (query never did this
+    ' -- user-requested improvement). Keyed Job ID + "|" + Machine.
+    '
+    ' 2026-09.03: Cards was removed (not needed any more, per the user) --
+    ' this used to snapshot Cards and Rdy as a pair; now it's Rdy alone.
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet(OUT_SHEET)
 
@@ -785,7 +808,7 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
         For r = 2 To lastOld
             key = Trim(CStr(ws.Cells(r, 3).Value)) & "|" & Trim(CStr(ws.Cells(r, 8).Value))
             If key <> "|" And Not CollHasKey(checkState, key) Then
-                checkState.Add Array(ws.Cells(r, 9).Value, ws.Cells(r, 10).Value), key
+                checkState.Add ws.Cells(r, 9).Value, key
             End If
         Next r
     End If
@@ -846,39 +869,40 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
     Next i
 
     ' ---- 4. Clear and rewrite. ClearContents (NOT .Clear) keeps the
-    ' checkbox cell formatting on I:J alive across rebuilds; stale direct
-    ' fills (last run's black spacer rows) are reset explicitly, and stale
-    ' row heights reset too (same .Cells.Clear-doesn't-reset-RowHeight
-    ' lesson as Press v14).
-    ' Every clear below is SCOPED TO COLUMNS A:K (was A:J before the
-    ' 2026-09.03 To Perso column). The user keeps a hand-built weekly
+    ' checkbox cell formatting on I (Rdy) alive across rebuilds; stale
+    ' direct fills (last run's black spacer rows) are reset explicitly,
+    ' and stale row heights reset too (same .Cells.Clear-doesn't-reset-
+    ' RowHeight lesson as Press v14).
+    ' Every clear below is SCOPED TO COLUMNS A:J (was A:K with the Cards
+    ' column, before it was removed 2026-09.03; A:J again now, same as
+    ' before To Perso was added). The user keeps a hand-built weekly
     ' summary grid (dynamic-array SORT/UNIQUE/FILTER spills plus a SUMIFS
     ' week-by-machine table) to the RIGHT of the data columns on this same
     ' sheet -- a whole-sheet clear would destroy it (2026-08.12, found
     ' while fixing the sheet1 metadata repair). The side grid's own
     ' conditional formatting is likewise left alone.
     Dim clearRange As Range
-    Set clearRange = ws.Range(ws.Columns(1), ws.Columns(11))
+    Set clearRange = ws.Range(ws.Columns(1), ws.Columns(10))
     clearRange.ClearContents
     clearRange.Interior.Pattern = xlNone
     clearRange.FormatConditions.Delete
 
-    ' Column L (was K before the 2026-09.03 To Perso column) carries STALE
-    ' conditional-formatting rules inherited from the original workbook
-    ' (machine-color rules on K121:K351 pointing at long-gone row offsets --
-    ' the blue cells the user spotted at K121:K123, back when this was
-    ' column K). It holds no data in this design; purge its rules and fills
-    ' every run.
-    ws.Columns(12).FormatConditions.Delete
-    ws.Columns(12).Interior.Pattern = xlNone
-    ws.Columns(12).Borders.LineStyle = xlNone
+    ' Column K (was L, was J, was K again before that -- see the column
+    ' history in the revision notes above) carries STALE conditional-
+    ' formatting rules inherited from the original workbook (machine-color
+    ' rules on K121:K351 pointing at long-gone row offsets -- the blue
+    ' cells the user spotted at K121:K123, back when this really was
+    ' column K). It holds no data in this design; purge its rules and
+    ' fills every run.
+    ws.Columns(11).FormatConditions.Delete
+    ws.Columns(11).Interior.Pattern = xlNone
+    ws.Columns(11).Borders.LineStyle = xlNone
 
     ' Stale manual borders inherited from the original workbook run across
     ' row 1 past the data (user-spotted 2026-08.12: a border line through
     ' K1..S1, back when the data ended at J). The capacity-table zone reset
-    ' starts at row 6, so clear the top strip L1:AD5 (was K1:AD5) explicitly
-    ' every run.
-    ws.Range("L1:AD5").Borders.LineStyle = xlNone
+    ' starts at row 6, so clear the top strip K1:AD5 explicitly every run.
+    ws.Range("K1:AD5").Borders.LineStyle = xlNone
 
     ' A:J borders are rebuilt to the data footprint below -- wipe them
     ' first so a shrinking queue never leaves stale lines behind.
@@ -889,7 +913,7 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
 
     Dim headers As Variant
     headers = Array("Ship Date", "To Perso", "Job ID", "Customer Name", "Description", "QTY", _
-                    "Location", "Machine", "Cards", "Rdy", "Week Start")
+                    "Location", "Machine", "Rdy", "Week Start")
     Dim c As Long
     For c = 0 To UBound(headers)
         ws.Cells(1, c + 1).Value = headers(c)
@@ -900,11 +924,18 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
         .Font.Color = RGB(255, 255, 255)
     End With
 
-    ' Checkbox cell formatting on I:J sized to the data (user request
-    ' 2026-08.12: the original file had it statically painted down to row
-    ' 380). The expected footprint = data rows + one spacer row between
-    ' machine groups; EnsureCheckboxFormats stamps the checkbox format down
-    ' exactly that far and clears any leftover below.
+    ' Week Start (J) is HIDDEN, not removed (user request 2026-09.03: not
+    ' needed for viewing, but ApplyTracieConditionalFormatting's odd-week-
+    ' bold rule still reads it via $J2). Set on the column every run so it
+    ' can never drift back to visible from a stray unhide.
+    ws.Columns(10).Hidden = True
+
+    ' Checkbox cell formatting on I (Rdy only -- Cards was removed
+    ' 2026-09.03) sized to the data (user request 2026-08.12: the original
+    ' file had it statically painted down to row 380). The expected
+    ' footprint = data rows + one spacer row between machine groups;
+    ' EnsureCheckboxFormats stamps the checkbox format down exactly that
+    ' far and clears any leftover below.
     Dim grpCount As Long: grpCount = 0
     For i = 1 To matchCount
         If i = 1 Then
@@ -921,7 +952,6 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
     Dim prevMach As String: prevMach = ""
 
     Dim rowIdx As Long, sd As Variant, wkStart As Variant
-    Dim prior As Variant
 
     For i = 1 To matchCount
         rowIdx = matchIdx(i)
@@ -952,23 +982,24 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
         ws.Cells(outRow, 7).Value = Trim(CStr(rawData(rowIdx, COL_LOCATION)))
         ws.Cells(outRow, 8).Value = matchMachine(i)
 
-        ' Cards / Rdy: restore the previous run's tick if this job was on
-        ' the tab before; default to FALSE (renders as an unticked checkbox
-        ' where the checkbox cell format is applied, plain FALSE otherwise).
+        ' Rdy: restore the previous run's tick if this job was on the tab
+        ' before; default to FALSE (renders as an unticked checkbox where
+        ' the checkbox cell format is applied, plain FALSE otherwise).
         key = Trim(CStr(rawData(rowIdx, COL_JOBID))) & "|" & matchMachine(i)
         If CollHasKey(checkState, key) Then
-            prior = checkState(key)
-            ws.Cells(outRow, 9).Value = SafeBool(prior(0))
-            ws.Cells(outRow, 10).Value = SafeBool(prior(1))
+            ws.Cells(outRow, 9).Value = SafeBool(checkState(key))
         Else
             ws.Cells(outRow, 9).Value = False
-            ws.Cells(outRow, 10).Value = False
         End If
 
         ' Week Start = Monday of the Ship Date's week (blank when undated).
+        ' Column kept but HIDDEN (user request 2026-09.03: not needed for
+        ' viewing, still needed by the odd-week-bold conditional format in
+        ' ApplyTracieConditionalFormatting) -- see the Columns(10).Hidden
+        ' line right after the header row is written, above.
         If IsDate(sd) Then
             wkStart = CDate(sd) - Weekday(CDate(sd), vbMonday) + 1
-            ws.Cells(outRow, 11).Value = wkStart
+            ws.Cells(outRow, 10).Value = wkStart
         End If
 
         outRow = outRow + 1
@@ -979,15 +1010,16 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
     If lastRow >= 2 Then
         ws.Range(ws.Cells(2, 1), ws.Cells(lastRow, 1)).NumberFormat = "m/d/yyyy"
         ws.Range(ws.Cells(2, 2), ws.Cells(lastRow, 2)).NumberFormat = "m/d/yyyy"
-        ws.Range(ws.Cells(2, 11), ws.Cells(lastRow, 11)).NumberFormat = "m/d/yyyy"
+        ws.Range(ws.Cells(2, 10), ws.Cells(lastRow, 10)).NumberFormat = "m/d/yyyy"
         ws.Range(ws.Cells(2, 6), ws.Cells(lastRow, 6)).NumberFormat = "#,##0"
 
-        ' Bottom border on every A:K cell, sized to the populated rows
+        ' Bottom border on every A:J cell, sized to the populated rows
         ' (user request 2026-08.12) -- inside-horizontal lines plus the
-        ' block's bottom edge give each row its underline; nothing is
-        ' drawn past column K (was J before the 2026-09.03 To Perso column)
-        ' or below the last populated row.
-        With ws.Range(ws.Cells(1, 1), ws.Cells(lastRow, 11))
+        ' block's bottom edge give each row its underline; nothing is drawn
+        ' past column J (Week Start -- Cards was removed 2026-09.03, To
+        ' Perso added 2026-09.03 earlier the same day, net back to J) or
+        ' below the last populated row.
+        With ws.Range(ws.Cells(1, 1), ws.Cells(lastRow, 10))
             .Borders(xlInsideHorizontal).LineStyle = xlContinuous
             .Borders(xlInsideHorizontal).Weight = xlThin
             .Borders(xlEdgeBottom).LineStyle = xlContinuous
@@ -1058,14 +1090,16 @@ End Function
 ' original workbook's CF rules died the moment a rebuild shifted their
 ' ranges; VBA-managed rules can't go stale). Three rule families, matching
 ' the original workbook's visuals:
-'   1. Per-machine row color over A2:K<last> (was A2:J<last> before the
-'      2026-09.03 To Perso column), formula
-'      =ISNUMBER(SEARCH("<display>",$H2)) (was $G2), fill = that roster
-'      row's Row Color cell fill. No fill on the roster cell = no rule.
-'   2. Odd-week BOLD banding: =AND($A2<>"",ISODD(WEEKNUM($K2,21))) --
+'   1. Per-machine row color over A2:J<last> (was A2:K<last> with Cards,
+'      before it was removed 2026-09.03; A2:J<last> before that with To
+'      Perso added but Cards still present), formula
+'      =ISNUMBER(SEARCH("<display>",$H2)), fill = that roster row's Row
+'      Color cell fill. No fill on the roster cell = no rule.
+'   2. Odd-week BOLD banding: =AND($A2<>"",ISODD(WEEKNUM($J2,21))) --
 '      alternate Ship-Date weeks read bold, same as the original ($A2 is
-'      Ship Date; To Perso swapped from A to B on 2026-09.03).
-'   3. Hide Cards/Rdy text on non-job rows: I:J white font when $A2="".
+'      Ship Date; $J2 is Week Start, hidden but still read here).
+'   3. Hide Rdy text on non-job rows: column I white font when $A2="" --
+'      was I:J (Cards/Rdy) until Cards was removed 2026-09.03.
 ' Rule 1 is added FIRST so machine fills sit above later rules in priority,
 ' mirroring the original rule order.
 ' =============================================================================
@@ -1084,7 +1118,7 @@ Private Sub ApplyMachineStyles(ByRef ws As Worksheet, ByVal lastRow As Long, ByR
             For m = 1 To UBound(roster, 1)
                 disp = Trim(CStr(roster(m, 2)))
                 If disp <> "" And StrComp(disp, mach, vbTextCompare) = 0 Then
-                    Set rng = ws.Range(ws.Cells(r, 1), ws.Cells(r, 11))
+                    Set rng = ws.Range(ws.Cells(r, 1), ws.Cells(r, 10))
                     If CLng(roster(m, 3)) <> -1 Then rng.Interior.Color = CLng(roster(m, 3))
                     If CStr(roster(m, 5)) <> "" Then rng.Font.name = CStr(roster(m, 5))
                     If CDbl(roster(m, 6)) > 0 Then rng.Font.Size = CDbl(roster(m, 6))
@@ -1104,7 +1138,7 @@ Private Sub ApplyTracieConditionalFormatting(ByRef ws As Worksheet, ByVal lastRo
     If lastRow < 2 Then Exit Sub
 
     Dim dataRange As Range
-    Set dataRange = ws.Range(ws.Cells(2, 1), ws.Cells(lastRow, 11))
+    Set dataRange = ws.Range(ws.Cells(2, 1), ws.Cells(lastRow, 10))
 
     ' The per-machine look is applied DIRECTLY by ApplyMachineStyles, not as a
     ' conditional format. Conditional formatting cannot carry a font name or
@@ -1112,53 +1146,56 @@ Private Sub ApplyTracieConditionalFormatting(ByRef ws As Worksheet, ByVal lastRo
     ' formatting lets the whole style follow it. Safe here because the tab is
     ' rebuilt from scratch on every run, which is the very reason the ORIGINAL
     ' workbook's CF rules went stale.
-    ' $A2/$K2 are Ship Date and Week Start -- $A2<>"" is "this is a real job
-    ' row, not a spacer". Ship Date reclaimed column A when To Perso swapped
-    ' back to B (2026-09.03), so this is the same reference the sheet used
-    ' before To Perso existed at all -- Ship Date is filled far more
-    ' consistently than To Perso, so keying the spacer check on it (rather
-    ' than whichever column happens to be A) is deliberate, not incidental.
+    ' $A2/$J2 are Ship Date and Week Start -- $A2<>"" is "this is a real job
+    ' row, not a spacer". Ship Date is filled far more consistently than To
+    ' Perso, so keying the spacer check on it (rather than whichever column
+    ' happens to be A) is deliberate, not incidental. Week Start (J) is a
+    ' hidden column (2026-09.03) but still perfectly readable by a formula.
     Dim fc As Object
 
     Set fc = dataRange.FormatConditions.Add(Type:=xlExpression, _
-        Formula1:="=AND($A2<>"""",ISODD(WEEKNUM($K2,21)))")
+        Formula1:="=AND($A2<>"""",ISODD(WEEKNUM($J2,21)))")
     fc.Font.Bold = True
     fc.StopIfTrue = False
 
+    ' Column I only (Rdy) -- was I:J (Cards/Rdy) before Cards was removed
+    ' 2026-09.03.
     Dim checkRange As Range
-    Set checkRange = ws.Range(ws.Cells(2, 9), ws.Cells(lastRow, 10))
+    Set checkRange = ws.Range(ws.Cells(2, 9), ws.Cells(lastRow, 9))
     Set fc = checkRange.FormatConditions.Add(Type:=xlExpression, Formula1:="=$A2=""""")
     fc.Font.Color = RGB(255, 255, 255)
     fc.StopIfTrue = False
 End Sub
 
 ' =============================================================================
-' CAPACITY TABLE (columns M+ on Tracie, was L+ before the 2026-09.03 To
-' Perso column) -- 2026-08.12 'fully dynamic' rebuild, replacing the
+' CAPACITY TABLE (columns L+ on Tracie -- was M+ until Cards was removed
+' 2026-09.03, and L+ before that again with the To Perso column but Cards
+' still present) -- 2026-08.12 'fully dynamic' rebuild, replacing the
 ' original hand-built grid: 158 per-cell SUMIFS formulas hardcoded to rows
 ' 2:381 plus two header spills capped at row 381/382 (the hardcoding meant
 ' any queue past 381 rows silently undercounted, and Excel's repair of the
 ' v1 file wiped the header spills entirely). Recreated as THREE self-sizing
 ' spill formulas:
-'   N7  machines across:  TRANSPOSE(SORT(UNIQUE(FILTER(H2:H5000,...))))
-'   M8  week starts down: SORT(UNIQUE(FILTER(K2:K5000,...)))
-'   N8  the whole grid in ONE formula: SUMIFS with the two spill refs
-'       ($M$8# rows x $N$7# columns) broadcasting into a 2D result that
+'   M7  machines across:  TRANSPOSE(SORT(UNIQUE(FILTER(H2:H5000,...))))
+'   L8  week starts down: SORT(UNIQUE(FILTER(J2:J5000,...)))
+'   M8  the whole grid in ONE formula: SUMIFS with the two spill refs
+'       ($L$8# rows x $M$7# columns) broadcasting into a 2D result that
 '       grows/shrinks with both header spills; zeros render blank.
-' (Were M7/L8/M8 reading G/J/E before the 2026-09.03 To Perso column
-' shifted Machine/Week Start/QTY from G/J/E to H/K/F.)
+' (Machine stayed at H throughout; Week Start moved K -> J when Cards was
+' removed 2026-09.03, having moved there from J -> K when To Perso was
+' added earlier the same day -- net unchanged from before either change.)
 ' New machines, more weeks, longer queues: nothing to maintain. The 5000-
 ' row bound on the header FILTERs is ~13x the largest queue seen to date
 ' (SUMIFS itself scans whole columns, so totals stay exact regardless).
 '
-' Written ONCE (self-healing): if N7/N8 already hold the dynamic formulas
+' Written ONCE (self-healing): if M7/M8 already hold the dynamic formulas
 ' nothing is touched, so manual tweaks survive updates. The one-time
 ' migration clears the legacy grid area (still L1:AD500 -- see the note at
-' its check, which moved to M6) first -- stale fixed-range formulas or
-' cached spill values there would otherwise block the new spills with
-' #SPILL! errors.
-' Right-hand edge of the capacity zone, in columns. The table starts at M
-' (13) with the week column, so machines run from N (14). It can never
+' its check, which moved to L6, right back where it was before the To
+' Perso/Cards changes) first -- stale fixed-range formulas or cached spill
+' values there would otherwise block the new spills with #SPILL! errors.
+' Right-hand edge of the capacity zone, in columns. The table starts at L
+' (12) with the week column, so machines run from M (13). It can never
 ' hold more machines than the roster does, plus a small margin so a
 ' machine added by Work Center Discovery is already formatted on the run
 ' that finds it.
@@ -1166,12 +1203,13 @@ End Sub
 ' Clamped at column 50 (AX) on purpose: AZ1/AZ2 hold the checkbox format
 ' template that EnsureCheckboxFormats clones from, and a border/fill reset
 ' reaching those cells could strip the XF complement that carries Excel's
-' cell control -- which is the whole mechanism behind the Cards/Rdy boxes.
+' cell control -- which is the whole mechanism behind the Rdy box (Cards
+' was removed 2026-09.03).
 Private Function CapacityLastCol(ByRef roster As Variant) As Long
     Dim n As Long: n = 0
     If Not IsEmpty(roster) Then n = UBound(roster, 1)
-    CapacityLastCol = 13 + n + 2
-    If CapacityLastCol < 14 Then CapacityLastCol = 14
+    CapacityLastCol = 12 + n + 2
+    If CapacityLastCol < 13 Then CapacityLastCol = 13
     ' Clamped at column 50 (AX) on purpose regardless of where the table
     ' starts: AZ1/AZ2 hold the checkbox format template (EnsureCheckbox-
     ' Formats), and a border/fill reset reaching those cells could strip
@@ -1199,37 +1237,35 @@ Private Sub EnsureCapacityTable(ByRef ws As Worksheet, ByVal lastDataRow As Long
     ' 2026-08-31: this cleared L1:AD500 -- rows 1 to 5 INCLUDED. The legacy
     ' grid never occupied those rows (the zone reset below has always started
     ' at row 6), but anything a user parked in that top strip was inside the
-    ' blast radius, and the only thing holding the trigger down is M6 still
+    ' blast radius, and the only thing holding the trigger down is L6 still
     ' containing the word "Capacity". Retitle that label, delete the row, or
     ' let it get overwritten, and the next Update Data silently ClearContents
     ' across the whole block. Narrowed to the capacity zone proper, so rows
     ' 1-5 to the right of the data are now genuinely user territory.
     '
-    ' 2026-09.03: the check cell moved from L6 to M6 (the table itself moved
-    ' one column right, to make room for the new To Perso data column), and
-    ' the left edge of the clear stayed at column 12 (L) rather than moving
-    ' with it -- L is now just the purge/buffer column (see BuildTracieTab),
-    ' so leaving the clear's left edge there also sweeps up whatever the
-    ' PREVIOUS (pre-To-Perso) build last wrote at old L6/L8, on the one run
-    ' where M6 is genuinely empty for the first time.
-    If InStr(CStr(ws.Range("M6").Value), "Capacity") = 0 Then
-        ws.Range(ws.Cells(6, 12), ws.Cells(500, 30)).ClearContents
+    ' 2026-09.03: the check cell moved L6 -> M6 (To Perso column added) ->
+    ' L6 again (Cards column removed, later the same day). The clear's left
+    ' edge tracks the CURRENT buffer/purge column (see BuildTracieTab) each
+    ' time, one column left of wherever the table starts -- so it always
+    ' sweeps up whatever the previous build last wrote at its own label
+    ' cell, on the one run where the label cell is genuinely empty again.
+    If InStr(CStr(ws.Range("L6").Value), "Capacity") = 0 Then
+        ws.Range(ws.Cells(6, 11), ws.Cells(500, 30)).ClearContents
     End If
 
-    ws.Range("M6").Value = "Capacity - QTY by Week Start x Machine (auto-sizing)"
-    ws.Range("M6").Font.Bold = True
-    ws.Range("M6").Font.Italic = True
+    ws.Range("L6").Value = "Capacity - QTY by Week Start x Machine (auto-sizing)"
+    ws.Range("L6").Font.Bold = True
+    ws.Range("L6").Font.Italic = True
 
-    ' H = Machine, K = Week Start, F = QTY -- all one column right of where
-    ' they sat before the 2026-09.03 To Perso column (were G, J, E).
-    Dim hRef As String, kRef As String
+    ' H = Machine (unchanged throughout), J = Week Start, F = QTY.
+    Dim hRef As String, jRef As String
     hRef = "$H$2:$H$" & lastRef
-    kRef = "$K$2:$K$" & lastRef
+    jRef = "$J$2:$J$" & lastRef
 
-    ws.Range("N7").Formula2 = "=IFERROR(TRANSPOSE(SORT(UNIQUE(FILTER(" & hRef & "," & hRef & "<>"""")))),"""")"
-    ws.Range("M8").Formula2 = "=IFERROR(SORT(UNIQUE(FILTER(" & kRef & "," & kRef & "<>""""))),"""")"
-    ws.Range("N8").Formula2 = "=LET(s,SUMIFS($F$2:$F$" & lastRef & ",$K$2:$K$" & lastRef & _
-                              ",$M$8#,$H$2:$H$" & lastRef & ",$N$7#),IF(s=0,"""",s))"
+    ws.Range("M7").Formula2 = "=IFERROR(TRANSPOSE(SORT(UNIQUE(FILTER(" & hRef & "," & hRef & "<>"""")))),"""")"
+    ws.Range("L8").Formula2 = "=IFERROR(SORT(UNIQUE(FILTER(" & jRef & "," & jRef & "<>""""))),"""")"
+    ws.Range("M8").Formula2 = "=LET(s,SUMIFS($F$2:$F$" & lastRef & ",$J$2:$J$" & lastRef & _
+                              ",$L$8#,$H$2:$H$" & lastRef & ",$M$7#),IF(s=0,"""",s))"
 
     ' The header bold is safe to set here -- one row, bounded by the roster.
     ' NUMBER FORMATS ARE NOT SET HERE ANY MORE (2026-08-31).
@@ -1246,7 +1282,7 @@ Private Sub EnsureCapacityTable(ByRef ws As Worksheet, ByVal lastDataRow As Long
     ' after this and is the only place that knows how far the spills actually
     ' reached. That also makes them self-correcting when the table shrinks.
     Dim zoneLastCol As Long: zoneLastCol = CapacityLastCol(roster)
-    ws.Range(ws.Cells(7, 14), ws.Cells(7, zoneLastCol)).Font.Bold = True
+    ws.Range(ws.Cells(7, 13), ws.Cells(7, zoneLastCol)).Font.Bold = True
 
     If Err.Number <> 0 Then
         gSetupWarnings = gSetupWarnings & vbCrLf & _
@@ -1264,10 +1300,11 @@ End Sub
 ' 2026-08.12: rows past the old hand-formatted block showed unformatted).
 ' Column fills come from the Machine Roster's Row Color cells -- the same
 ' single source of truth that colors the job rows, so changing a roster
-' color updates both on the next run. The zone M6:AD500 (was L6:AD500
-' before the 2026-09.03 To Perso column) is treated as VBA-owned for
-' FORMATTING: stale borders/fills there are reset each run (values,
-' formulas, and number formats are never touched).
+' color updates both on the next run. The zone L6:AD500 (was M6:AD500
+' while To Perso was in and Cards was still present, and L6:AD500 again
+' now that Cards is removed) is treated as VBA-owned for FORMATTING: stale
+' borders/fills there are reset each run (values, formulas, and number
+' formats are never touched).
 Private Sub FormatCapacityTable(ByRef ws As Worksheet, ByRef roster As Variant)
     ' Force this sheet to calculate so the spills are current (the build
     ' runs under Calculation = Manual).
@@ -1288,10 +1325,10 @@ Private Sub FormatCapacityTable(ByRef ws As Worksheet, ByRef roster As Variant)
 
     Dim lastWkRow As Long: lastWkRow = 7
     Do While lastWkRow < usedLastRow
-        If Trim(CStr(ws.Cells(lastWkRow + 1, 13).Value)) = "" Then Exit Do
+        If Trim(CStr(ws.Cells(lastWkRow + 1, 12).Value)) = "" Then Exit Do
         lastWkRow = lastWkRow + 1
     Loop
-    Dim lastMachCol As Long: lastMachCol = 13
+    Dim lastMachCol As Long: lastMachCol = 12
     Do While lastMachCol < maxMachCol
         If Trim(CStr(ws.Cells(7, lastMachCol + 1).Value)) = "" Then Exit Do
         lastMachCol = lastMachCol + 1
@@ -1299,7 +1336,7 @@ Private Sub FormatCapacityTable(ByRef ws As Worksheet, ByRef roster As Variant)
 
     ' Reset the zone's look first so a SHRINKING table never leaves stale
     ' borders or fills behind. The reset window is the CURRENT extent plus a
-    ' margin rather than a fixed M6:AD500 block: it has to cover last run's
+    ' margin rather than a fixed L6:AD500 block: it has to cover last run's
     ' table, but painting it across every unused row below would instantiate
     ' thousands of empty cells in the file for nothing. A table that loses
     ' more than RESET_MARGIN_ROWS weeks in a single run could leave stale
@@ -1310,31 +1347,31 @@ Private Sub FormatCapacityTable(ByRef ws As Worksheet, ByRef roster As Variant)
     If resetLastRow < 8 Then resetLastRow = 8
 
     Dim zone As Range
-    Set zone = ws.Range(ws.Cells(6, 13), ws.Cells(resetLastRow, maxMachCol))
+    Set zone = ws.Range(ws.Cells(6, 12), ws.Cells(resetLastRow, maxMachCol))
     zone.Borders.LineStyle = xlNone
     zone.Interior.Pattern = xlNone
-    ws.Range(ws.Cells(7, 13), ws.Cells(resetLastRow, maxMachCol)).Font.Bold = False
-    ws.Range(ws.Cells(8, 13), ws.Cells(resetLastRow, maxMachCol)).NumberFormat = "General"
+    ws.Range(ws.Cells(7, 12), ws.Cells(resetLastRow, maxMachCol)).Font.Bold = False
+    ws.Range(ws.Cells(8, 12), ws.Cells(resetLastRow, maxMachCol)).NumberFormat = "General"
 
-    If lastWkRow < 8 Or lastMachCol < 14 Then Exit Sub  ' nothing spilled
+    If lastWkRow < 8 Or lastMachCol < 13 Then Exit Sub  ' nothing spilled
 
     ' Number formats, sized to what actually spilled (moved here from
     ' EnsureCapacityTable on 2026-08-31 -- see the note there). The reset
     ' above has already returned the whole window to General, so a table that
     ' shrank does not leave formatted empties behind.
-    ws.Range(ws.Cells(8, 13), ws.Cells(lastWkRow, 13)).NumberFormat = "m/d/yyyy"
-    ws.Range(ws.Cells(8, 14), ws.Cells(lastWkRow, lastMachCol)).NumberFormat = "#,##0"
+    ws.Range(ws.Cells(8, 12), ws.Cells(lastWkRow, 12)).NumberFormat = "m/d/yyyy"
+    ws.Range(ws.Cells(8, 13), ws.Cells(lastWkRow, lastMachCol)).NumberFormat = "#,##0"
 
     Dim tbl As Range
-    Set tbl = ws.Range(ws.Cells(7, 13), ws.Cells(lastWkRow, lastMachCol))
+    Set tbl = ws.Range(ws.Cells(7, 12), ws.Cells(lastWkRow, lastMachCol))
     tbl.Borders.LineStyle = xlContinuous
     tbl.Borders.Weight = xlThin
-    ws.Range(ws.Cells(7, 13), ws.Cells(7, lastMachCol)).Font.Bold = True
-    ws.Range(ws.Cells(8, 13), ws.Cells(lastWkRow, 13)).Font.Bold = True
+    ws.Range(ws.Cells(7, 12), ws.Cells(7, lastMachCol)).Font.Bold = True
+    ws.Range(ws.Cells(8, 12), ws.Cells(lastWkRow, 12)).Font.Bold = True
 
     ' Machine column fills from the roster's Row Color cells.
     Dim c As Long, m As Long, hdr As String
-    For c = 14 To lastMachCol
+    For c = 13 To lastMachCol
         hdr = Trim(CStr(ws.Cells(7, c).Value))
         For m = 1 To UBound(roster, 1)
             If StrComp(hdr, CStr(roster(m, 2)), vbTextCompare) = 0 Then
@@ -1347,16 +1384,17 @@ Private Sub FormatCapacityTable(ByRef ws As Worksheet, ByRef roster As Variant)
     Next c
 End Sub
 
-' Keeps the I:J checkbox cell formatting sized to the CURRENT data (user
-' request 2026-08.12; was H:I before the 2026-09.03 To Perso column).
-' VBA cannot CREATE Excel's checkbox cell control, but it can copy the
-' format of a cell that already has it: on the first run the original I2
-' checkbox format is stashed in AZ1 (marked at AZ2, far right of anything
-' this workbook uses); every run then pastes that stashed format down
-' I2:J<last data row> and CLEARS formats below it, so checkboxes always
-' end exactly where the data ends instead of at the old hand-painted row
-' 380. AZ1/AZ2 themselves did not move -- they are an arbitrary far-right
-' stash, not part of the data/capacity layout.
+' Keeps the I (Rdy) checkbox cell formatting sized to the CURRENT data
+' (user request 2026-08.12; was H:I, then I:J for Cards+Rdy, before Cards
+' was removed 2026-09.03). VBA cannot CREATE Excel's checkbox cell
+' control, but it can copy the format of a cell that already has it: on
+' the first run the original I2 checkbox format is stashed in AZ1 (marked
+' at AZ2, far right of anything this workbook uses); every run then
+' pastes that stashed format down I2:I<last data row> and CLEARS formats
+' below it, so checkboxes always end exactly where the data ends instead
+' of at the old hand-painted row 380. AZ1/AZ2 themselves did not move --
+' they are an arbitrary far-right stash, not part of the data/capacity
+' layout.
 Private Sub EnsureCheckboxFormats(ByRef ws As Worksheet, ByVal lastDataRow As Long)
     If Trim(CStr(ws.Range("AZ2").Value)) <> "chk-template" Then
         ws.Range("I2").Copy
@@ -1368,7 +1406,7 @@ Private Sub EnsureCheckboxFormats(ByRef ws As Worksheet, ByVal lastDataRow As Lo
 
     If lastDataRow >= 2 Then
         ws.Range("AZ1").Copy
-        ws.Range(ws.Cells(2, 9), ws.Cells(lastDataRow, 10)).PasteSpecial xlPasteFormats
+        ws.Range(ws.Cells(2, 9), ws.Cells(lastDataRow, 9)).PasteSpecial xlPasteFormats
         Application.CutCopyMode = False
     End If
 
@@ -1385,7 +1423,7 @@ Private Sub EnsureCheckboxFormats(ByRef ws As Worksheet, ByVal lastDataRow As Lo
     Dim clearTo As Long
     clearTo = ws.UsedRange.Row + ws.UsedRange.Rows.Count - 1
     If clearTo > lastDataRow Then
-        ws.Range(ws.Cells(lastDataRow + 1, 9), ws.Cells(clearTo, 10)).ClearFormats
+        ws.Range(ws.Cells(lastDataRow + 1, 9), ws.Cells(clearTo, 9)).ClearFormats
     End If
 End Sub
 
@@ -1647,12 +1685,13 @@ End Function
 ' something a routine refresh should ever do on its own.
 '
 ' SAFETY. The delete floor is the LOWEST row that anything real occupies:
-'   - the last job row (max over columns A:K -- was A:J before the
-'     2026-09.03 To Perso column -- so a black spacer row cannot shorten
-'     it),
-'   - the bottom of the capacity table's week spill in column M (was L),
+'   - the last job row (max over columns A:J -- was A:K with the Cards
+'     column, before it was removed 2026-09.03 -- so a black spacer row
+'     cannot shorten it),
+'   - the bottom of the capacity table's week spill in column L (was M
+'     while Cards was still present alongside To Perso),
 '   - the bottom of every shape on the sheet (the Update Data button sits
-'     at row 1 col M today -- was col L -- but it is user-owned and may
+'     at row 1 col L today -- was col M -- but it is user-owned and may
 '     have been dragged),
 '   - a floor of row 10 regardless.
 ' Nothing at or above that row is touched. Below it, whole rows are deleted,
@@ -1686,7 +1725,7 @@ Public Sub CompactPersoSheet()
     ' enough -- but taking the max costs nothing and cannot be wrong.
     Dim lastDataRow As Long, c As Long, rr As Long
     lastDataRow = 1
-    For c = 1 To 11
+    For c = 1 To 10
         rr = ws.Cells(ws.Rows.Count, c).End(xlUp).Row
         If rr > lastDataRow Then lastDataRow = rr
     Next c
@@ -1694,7 +1733,7 @@ Public Sub CompactPersoSheet()
     ' ---- Floor 2: the bottom of the capacity table's week spill.
     Dim capBottom As Long: capBottom = 7
     Do While capBottom < ws.Rows.Count - 1
-        If Trim(CStr(ws.Cells(capBottom + 1, 13).Value)) = "" Then Exit Do
+        If Trim(CStr(ws.Cells(capBottom + 1, 12).Value)) = "" Then Exit Do
         capBottom = capBottom + 1
     Loop
 
@@ -1749,10 +1788,10 @@ Public Sub CompactPersoSheet()
 
     ' Stray formatting in the capacity columns that sits BESIDE the job rows
     ' (between the bottom of the week spill and the last job row). Row
-    ' deletion cannot reach it -- those rows carry real data in A:K (was
-    ' A:J before the 2026-09.03 To Perso column).
+    ' deletion cannot reach it -- those rows carry real data in A:J (was
+    ' A:K with Cards, before it was removed 2026-09.03).
     If lastDataRow > capBottom Then
-        ws.Range(ws.Cells(capBottom + 1, 12), ws.Cells(lastDataRow, 50)).ClearFormats
+        ws.Range(ws.Cells(capBottom + 1, 11), ws.Cells(lastDataRow, 50)).ClearFormats
     End If
 
     ws.Range(ws.Rows(floorRow + 1), ws.Rows(usedLast)).Delete
@@ -2514,7 +2553,7 @@ Private Sub EnsureUpdateButton()
         Dim moved As Shape
         Set moved = wsOut.Shapes(wsOut.Shapes.Count)
         moved.name = BTN_NAME
-        moved.Left = wsOut.Cells(1, 13).Left + 4
+        moved.Left = wsOut.Cells(1, 12).Left + 4
         moved.Top = 4
         moved.OnAction = "UpdatePersoData"
         On Error Resume Next
@@ -2532,9 +2571,9 @@ MoveFailed:
     End If
 
     ' Created on TRACIE (user request 2026-08.12), parked above the
-    ' capacity table (row 1, col M area -- was col L before the 2026-09.03
-    ' To Perso column). Still user-owned: drag it anywhere -- including
-    ' another sheet -- and it stays put.
+    ' capacity table (row 1, col L area -- was col M while Cards was still
+    ' present alongside To Perso). Still user-owned: drag it anywhere --
+    ' including another sheet -- and it stays put.
     Dim wsHome As Worksheet
     On Error Resume Next
     Set wsHome = ThisWorkbook.Sheets(OUT_SHEET)
@@ -2544,7 +2583,7 @@ MoveFailed:
     ' Created at the two-line height (v3). A button made at the old 34pt is
     ' grown once by RefreshUpdateButton, and only while it is still untouched.
     Set shp = wsHome.Shapes.AddShape(msoShapeRoundedRectangle, _
-        wsHome.Cells(1, 13).Left + 4, 4, BTN_DEF_W, BTN_TWO_LINE_H)
+        wsHome.Cells(1, 12).Left + 4, 4, BTN_DEF_W, BTN_TWO_LINE_H)
 
     shp.name = BTN_NAME
     shp.OnAction = "UpdatePersoData"
@@ -2620,7 +2659,7 @@ Private Function IsAllDigits(ByVal s As String) As Boolean
 End Function
 
 '' True only for an actual True or a "TRUE"/"True" string -- anything else
-' (empty, error, text) is False. Used when restoring Cards/Rdy ticks.
+' (empty, error, text) is False. Used when restoring Rdy ticks.
 Private Function SafeBool(ByVal v As Variant) As Boolean
     SafeBool = False
     On Error Resume Next
