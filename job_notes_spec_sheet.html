@@ -471,7 +471,7 @@
             <path d="M44.05 14.80 A21 21 0 0 1 44.05 49.20" stroke="#FFD500" stroke-width="4.4" stroke-linecap="round"/>
             <path d="M19.95 14.80 A21 21 0 0 0 19.95 49.20" stroke="#FFD500" stroke-width="4.4" stroke-linecap="round"/>
           </svg>
-        </div><div><h2>RFID Inlay</h2><p>Pick a chip family, then the specific type. Ving Encoding: leave off = No.</p></div></div>
+        </div><div><h2>RFID Inlay</h2><p>Pick a chip family, then the specific type. Ving Encoding, UID Read, Return File: leave off = No.</p></div></div>
         <div class="body">
           <div class="grid">
             <div class="field span-2">
@@ -487,6 +487,8 @@
                 <div class="btn-group" id="rfidTypeGroup" data-field="rfidInlayType" data-label="RFID Inlay Type"></div>
               </div>
             </div>
+            <div class="field"><label>UID Read</label><div class="yn" data-field="uidRead" data-label="UID Read"><button type="button" class="yes">Yes</button></div></div>
+            <div class="field"><label>Return File</label><div class="yn" data-field="returnFile" data-label="Return File"><button type="button" class="yes">Yes</button></div></div>
           </div>
         </div>
       </section>
@@ -896,7 +898,7 @@ var RFID_FAMILIES = {
     'sec-callouts': ['pliOnBack','arrow','pcNumber'],
     'sec-art':      ['frontArt','backArt'],
     'sec-tooling':  ['lockSystem','lockSystemTech','dieNumber','size','thickness'],
-    'sec-rfid':     ['rfidInlayType','vingEncoding'],
+    'sec-rfid':     ['rfidInlayType','vingEncoding','uidRead','returnFile'],
     'sec-magenc':   ['magEncodingType','magTracks','magEncodingDetails'],
     'sec-stock':    ['stock','stockColor'],
     'sec-press':    ['pressTarget','pressFrontFinish','pressBackFinish','frontColor','backColor','bleeds'],
