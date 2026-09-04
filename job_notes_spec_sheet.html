@@ -177,6 +177,15 @@
   }
   .field label{font-size:12.5px;font-weight:700;color:#3a3530;display:flex;justify-content:space-between;}
   .field label .req{color:var(--magenta);font-weight:800;}
+  /* Bordered nested group for a cluster of related sub-options (e.g. Hole
+     Punch Location) — sets it apart from the plain field grid around it. */
+  .subpanel{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:rgba(0,0,0,.02);}
+  .subpanel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .subpanel-head > label{font-size:12.5px;font-weight:700;color:#3a3530;margin:0;}
+  .subpanel-offset{display:flex;align-items:center;gap:8px;}
+  .subpanel-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .subpanel-row + .subpanel-row{margin-top:12px;}
+  .subpanel-row .row-label{font-size:11.5px;font-weight:700;color:var(--muted);min-width:44px;}
   .rfid-top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
   .rfid-left-col{display:flex;flex-direction:column;gap:10px;flex:1;min-width:260px;}
   .rfid-left-col > label{margin:0;}
@@ -720,14 +729,26 @@
             <div class="field"><label>Hole Punch</label><div class="yn" data-field="holePunch" data-label="Hole Punch"><button type="button" class="yes">Yes</button></div></div>
           </div>
           <div id="holePunchDetailsField" style="display:none; margin-top:16px;">
-            <div class="grid cols-3">
+            <div class="grid">
               <div class="field"><label>Hole Type</label><div class="btn-group" data-field="holeType" data-label="Hole Type" data-options="holeType"></div></div>
               <div class="field"><label>Orientation</label><div class="btn-group" data-field="holeOrientation" data-label="Orientation" data-options="holeOrientation"></div></div>
-              <div class="field"><label>Offset</label><div class="yn" data-field="holeOffset" data-label="Offset"><button type="button" class="yes">Yes</button></div></div>
             </div>
-            <div class="grid" style="margin-top:16px;">
-              <div class="field"><label>Location</label><div class="btn-group" data-field="holeEdge" data-label="Location" data-options="holeEdge"></div></div>
-              <div class="field" id="holePositionField" style="display:none;"><label>Position</label><div class="btn-group" data-field="holePosition" data-label="Position" data-options="holePosition"></div></div>
+            <div class="subpanel" style="margin-top:16px;">
+              <div class="subpanel-head">
+                <label>Location</label>
+                <div class="subpanel-offset">
+                  <span class="hint">Offset</span>
+                  <div class="yn" data-field="holeOffset" data-label="Offset"><button type="button" class="yes">Yes</button></div>
+                </div>
+              </div>
+              <div class="subpanel-row">
+                <span class="row-label">Edge</span>
+                <div class="btn-group" data-field="holeEdge" data-label="Location" data-options="holeEdge"></div>
+              </div>
+              <div class="subpanel-row" id="holePositionRow" style="display:none;">
+                <span class="row-label">Position</span>
+                <div class="btn-group" data-field="holePosition" data-label="Position" data-options="holePosition"></div>
+              </div>
             </div>
           </div>
           <div class="grid" style="margin-top:16px;">
@@ -1585,7 +1606,7 @@ var RFID_FAMILIES = {
   var holeYN = document.querySelector('.yn[data-field="holePunch"]');
   var holeField = document.getElementById('holePunchDetailsField');
   var holeEdgeGroup = document.querySelector('.btn-group[data-field="holeEdge"]');
-  var holePositionField = document.getElementById('holePositionField');
+  var holePositionRow = document.getElementById('holePositionRow');
   var proofOptionsGroup = document.querySelector('.btn-group[data-field="proofOptions"]');
   var proofCustomField = document.getElementById('proofCustomField');
   var silkFrontTargetGroup = document.querySelector('.btn-group[data-field="silkFrontTarget"]');
@@ -1612,7 +1633,7 @@ var RFID_FAMILIES = {
 
   function onFieldChange(field){
     if (field === 'holePunch') holeField.style.display = (holeYN.value === 'Yes') ? 'block' : 'none';
-    if (field === 'holeEdge') holePositionField.style.display = holeEdgeGroup.value ? 'flex' : 'none';
+    if (field === 'holeEdge') holePositionRow.style.display = holeEdgeGroup.value ? 'flex' : 'none';
     if (field === 'proofOptions') proofCustomField.style.display = (proofOptionsGroup.value === 'Customer Specific') ? 'flex' : 'none';
     if (field === 'silkFrontTarget') silkFrontScreenNumberField.style.display = (silkFrontTargetGroup.value === 'Archive') ? 'flex' : 'none';
     if (field === 'silkBackTarget') silkBackScreenNumberField.style.display = (silkBackTargetGroup.value === 'Archive') ? 'flex' : 'none';
