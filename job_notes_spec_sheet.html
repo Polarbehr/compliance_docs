@@ -130,17 +130,37 @@
   .field{display:flex;flex-direction:column;gap:8px;}
   .field.span-2{grid-column:span 2;}
   @media (max-width:640px){.field.span-2{grid-column:span 1;}}
-  /* Pin these to their own column so one showing without the other doesn't
-     slide into the wrong (front/back) side of the grid. */
-  #silkFrontScreenNumberField{grid-column:1;}
-  #silkBackScreenNumberField{grid-column:2;}
+  /* Pin these to explicit grid positions so a hidden sibling never lets a
+     visible field slide into the wrong (front/back, or shrink-wrap/sleeve)
+     column of the grid. */
+  #frontArtField{grid-column:1; grid-row:1;}
+  #backArtField{grid-column:2; grid-row:1;}
+  #frontArtPrevField{grid-column:1; grid-row:2;}
+  #backArtPrevField{grid-column:2; grid-row:2;}
+
+  #silkFrontEffectField{grid-column:1; grid-row:1;}
+  #silkBackEffectField{grid-column:2; grid-row:1;}
+  #silkFrontTargetField{grid-column:1; grid-row:2;}
+  #silkBackTargetField{grid-column:2; grid-row:2;}
+  #silkFrontScreenNumberField{grid-column:1; grid-row:3;}
+  #silkBackScreenNumberField{grid-column:2; grid-row:3;}
+  #silkFrontEffectDetailsField{grid-column:1; grid-row:4;}
+  #silkBackEffectDetailsField{grid-column:2; grid-row:4;}
+
   #shrinkWrapPacksField{grid-column:1; grid-row:1;}
   #shrinkWrapSpecialField{grid-column:1; grid-row:2;}
   #sleeveField{grid-column:2; grid-row:1;}
-  #sleeveLabelsField{grid-column:2; grid-row:2;}
+  #sleeveTypeField{grid-column:2; grid-row:2;}
+  #sleeveTypeDetailsField{grid-column:2; grid-row:3;}
+  #sleeveLabelsField{grid-column:2; grid-row:4;}
+
   @media (max-width:640px){
+    #frontArtField, #backArtField, #frontArtPrevField, #backArtPrevField,
+    #silkFrontEffectField, #silkBackEffectField, #silkFrontTargetField, #silkBackTargetField,
     #silkFrontScreenNumberField, #silkBackScreenNumberField,
-    #shrinkWrapPacksField, #shrinkWrapSpecialField, #sleeveField, #sleeveLabelsField{
+    #silkFrontEffectDetailsField, #silkBackEffectDetailsField,
+    #shrinkWrapPacksField, #shrinkWrapSpecialField,
+    #sleeveField, #sleeveTypeField, #sleeveTypeDetailsField, #sleeveLabelsField{
       grid-column:1; grid-row:auto;
     }
   }
@@ -238,7 +258,7 @@
   .ic.c1{background:var(--cyan);} .ic.c2{background:var(--magenta);} .ic.c3{background:var(--orange);}
   .ic.c4{background:#7c3aed;} .ic.c5{background:#0ea5a4;} .ic.c6{background:var(--key);}
   .ic.c7{background:#d946ef;} .ic.c8{background:#f59e0b;} .ic.c9{background:var(--good);}
-  .ic.c10{background:#334155;} .ic.c11{background:#2563eb;} .ic.c12{background:#92400e;}
+  .ic.c10{background:#334155;} .ic.c11{background:#2563eb;} .ic.c12{background:#92400e;} .ic.c13{background:#4338ca;}
 
   @media print{
     header.top, nav.jump, .actionbar, #toast, .guide-overlay{display:none !important;}
@@ -384,6 +404,7 @@
           <button type="button" class="sec-toggle active" data-target="sec-rfid" aria-pressed="true"><span class="dot"></span>RFID Inlay</button>
           <button type="button" class="sec-toggle active" data-target="sec-silk" aria-pressed="true"><span class="dot"></span>Silk Screen</button>
           <button type="button" class="sec-toggle active" data-target="sec-magenc" aria-pressed="true"><span class="dot"></span>Magnetic Encoding</button>
+          <button type="button" class="sec-toggle active" data-target="sec-recipients" aria-pressed="true"><span class="dot"></span>Recipients / Ship-To</button>
         </div>
       </div>
       <span class="hint">Optional sections glow green when included; click to leave one off. Off sections are hidden from the form, export, and print.</span>
@@ -393,12 +414,18 @@
 
       <!-- JOB INFO -->
       <section class="card" id="sec-job">
-        <div class="head"><div class="ic c1">🏷️</div><div><h2>Job Information</h2><p>Basic identifiers for this job — not on the original sheet, added for tracking.</p></div></div>
+        <div class="head"><div class="ic c1">🏷️</div><div><h2>Job Information</h2><p>Basic identifiers for this job.</p></div></div>
         <div class="body">
           <div class="grid cols-3">
             <div class="field"><label>Customer Name</label><input type="text" data-field="customerName" data-label="Customer Name" placeholder="e.g. Acme Beverage Co."></div>
             <div class="field"><label>Job Number</label><input type="text" data-field="jobNumber" data-label="Job Number" placeholder="e.g. PO-48213"></div>
             <div class="field"><label>Sales Rep</label><input type="text" data-field="salesRep" data-label="Sales Rep" placeholder="e.g. J. Rivera"></div>
+            <div class="field"><label>Quantity</label><input type="text" data-field="quantity" data-label="Quantity" placeholder="e.g. 35,500"></div>
+            <div class="field"><label>Ship By Date</label><input type="date" data-field="shipByDate" data-label="Ship By Date"></div>
+            <div class="field">
+              <label>Payment Terms</label>
+              <div class="btn-group" data-field="paymentTerms" data-label="Payment Terms" data-options="paymentTerms"></div>
+            </div>
           </div>
         </div>
       </section>
@@ -442,16 +469,24 @@
 
       <!-- ARTWORK -->
       <section class="card" id="sec-art">
-        <div class="head"><div class="ic c4">🎨</div><div><h2>Artwork</h2><p>Is front/back artwork brand new or carried over from a previous run?</p></div></div>
+        <div class="head"><div class="ic c4">🎨</div><div><h2>Artwork</h2><p>Is front/back artwork brand new or carried over from a previous run? Previous needs the old job #.</p></div></div>
         <div class="body">
           <div class="grid">
-            <div class="field">
+            <div class="field" id="frontArtField">
               <label>Front Art</label>
               <div class="btn-group" data-field="frontArt" data-label="Front Art" data-options="artStatus"></div>
             </div>
-            <div class="field">
+            <div class="field" id="backArtField">
               <label>Back Art</label>
               <div class="btn-group" data-field="backArt" data-label="Back Art" data-options="artStatus"></div>
+            </div>
+            <div class="field" id="frontArtPrevField" style="display:none;">
+              <label>Front — Previous Job #</label>
+              <input type="text" data-field="frontArtPrevRef" data-label="Front Art Previous Job #" placeholder="e.g. C-00266583EV-L">
+            </div>
+            <div class="field" id="backArtPrevField" style="display:none;">
+              <label>Back — Previous Job #</label>
+              <input type="text" data-field="backArtPrevRef" data-label="Back Art Previous Job #" placeholder="e.g. C-57901C-EN">
             </div>
           </div>
         </div>
@@ -526,6 +561,8 @@
               <label>Tracks Encoded <span class="hint">(select all that apply)</span></label>
               <div class="btn-group" data-field="magTracks" data-label="Tracks Encoded" data-options="magTracks" data-multi="true"></div>
             </div>
+            <div class="field"><label>Lock Type</label><input type="text" data-field="magLockType" data-label="Mag Encoding Lock Type" placeholder="e.g. LOW-30-L"></div>
+            <div class="field"><label>Mag Stripe Color</label><input type="text" data-field="magStripeColor" data-label="Mag Stripe Color" placeholder="e.g. Brown"></div>
             <div class="field span-2">
               <label>Encoding Details</label>
               <input type="text" data-field="magEncodingDetails" data-label="Magnetic Encoding Details" placeholder="Track data format, facility code, custom notes">
@@ -577,19 +614,19 @@
         <div class="head"><div class="ic c7">🧵</div><div><h2>Silk Screen</h2><p>Front and back screen effect and target. Archive needs a screen number.</p></div></div>
         <div class="body">
           <div class="grid">
-            <div class="field">
+            <div class="field" id="silkFrontEffectField">
               <label>Front — Screen Effect <span class="hint">(select all that apply)</span></label>
               <div class="btn-group" data-field="silkFrontEffect" data-label="Silk Screen Front Effect" data-options="silkEffect" data-multi="true"></div>
             </div>
-            <div class="field">
+            <div class="field" id="silkBackEffectField">
               <label>Back — Screen Effect <span class="hint">(select all that apply)</span></label>
               <div class="btn-group" data-field="silkBackEffect" data-label="Silk Screen Back Effect" data-options="silkEffect" data-multi="true"></div>
             </div>
-            <div class="field">
+            <div class="field" id="silkFrontTargetField">
               <label>Front — Target</label>
               <div class="btn-group" data-field="silkFrontTarget" data-label="Silk Screen Front Target" data-options="silkTarget"></div>
             </div>
-            <div class="field">
+            <div class="field" id="silkBackTargetField">
               <label>Back — Target</label>
               <div class="btn-group" data-field="silkBackTarget" data-label="Silk Screen Back Target" data-options="silkTarget"></div>
             </div>
@@ -600,6 +637,14 @@
             <div class="field" id="silkBackScreenNumberField" style="display:none;">
               <label>Back — Screen Number</label>
               <input type="text" data-field="silkBackScreenNumber" data-label="Silk Screen Back Screen Number" placeholder="Archive screen #">
+            </div>
+            <div class="field" id="silkFrontEffectDetailsField">
+              <label>Front — Effect Details</label>
+              <input type="text" data-field="silkFrontEffectDetails" data-label="Silk Screen Front Effect Details" placeholder="e.g. Post Litho Fine Pearl Mix">
+            </div>
+            <div class="field" id="silkBackEffectDetailsField">
+              <label>Back — Effect Details</label>
+              <input type="text" data-field="silkBackEffectDetails" data-label="Silk Screen Back Effect Details" placeholder="e.g. Post Litho Fine Pearl Mix">
             </div>
           </div>
         </div>
@@ -619,12 +664,20 @@
               <div class="btn-group" data-field="shrinkWrapPacks" data-label="Shrink Wrap Packs" data-options="shrinkWrapPacks"></div>
             </div>
             <div class="field" id="sleeveField">
-              <label>Sleeve</label>
-              <div class="btn-group" data-field="sleeve" data-label="Sleeve" data-options="sleeveQty"></div>
+              <label>Sleeve Qty</label>
+              <div class="btn-group" data-field="sleeve" data-label="Sleeve Qty" data-options="sleeveQty"></div>
             </div>
             <div class="field" id="shrinkWrapSpecialField" style="display:none;">
               <label>Shrink Wrap — Special Details</label>
               <input type="text" data-field="shrinkWrapSpecialDetails" data-label="Shrink Wrap Special Details" placeholder="Specify pack quantity">
+            </div>
+            <div class="field" id="sleeveTypeField">
+              <label>Sleeve Type</label>
+              <div class="btn-group" data-field="sleeveType" data-label="Sleeve Type" data-options="sleeveType"></div>
+            </div>
+            <div class="field" id="sleeveTypeDetailsField" style="display:none;">
+              <label>Sleeve — Customer Specific Details</label>
+              <input type="text" data-field="sleeveTypeDetails" data-label="Sleeve Type Details" placeholder="Describe the customer's sleeve requirement">
             </div>
             <div class="field" id="sleeveLabelsField"><label>Sleeve Labels</label><input type="text" data-field="sleeveLabels" data-label="Sleeve Labels"></div>
           </div>
@@ -639,6 +692,17 @@
             <div class="field"><label>Overage OK</label><div class="yn" data-field="overageOK" data-label="Overage OK"><button type="button" class="yes">Yes</button></div></div>
             <div class="field"><label>Ship Early</label><div class="yn" data-field="shipEarly" data-label="Ship Early"><button type="button" class="yes">Yes</button></div></div>
             <div class="field"><label>Unders OK</label><div class="yn" data-field="undersOK" data-label="Unders OK"><button type="button" class="yes">Yes</button></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RECIPIENTS -->
+      <section class="card" id="sec-recipients">
+        <div class="head"><div class="ic c13">📍</div><div><h2>Recipients / Ship-To</h2><p>Only needed when one job ships to multiple named locations.</p></div></div>
+        <div class="body">
+          <div class="field">
+            <label>Recipients</label>
+            <textarea data-field="recipients" data-label="Recipients" style="min-height:90px;" placeholder="One per line, e.g.&#10;Four Seasons Houston - Qty: 273&#10;Le Meridien Houston Dwntwn - Qty: 294"></textarea>
           </div>
         </div>
       </section>
@@ -905,7 +969,9 @@ var DROPDOWN_OPTIONS = {
   magEncodingType:   ["Hi-Co", "Mid-Co", "Lo-Co"],
   magTracks:         ["Track 1", "Track 2", "Track 3"],
   shrinkWrapPacks:   ["10", "25", "50", "100", "Special"],
-  sleeveQty:         ["10", "25", "50", "100", "250", "500"]
+  sleeveQty:         ["10", "25", "50", "100", "250", "500"],
+  sleeveType:        ["Blank", "PLI", "Customer Specific"],
+  paymentTerms:      ["Net 30", "Credit Card", "Other"]
 };
 
 /* RFID Inlay Type is a two-step picker: pick a family button, then a row of
@@ -932,18 +998,19 @@ var RFID_FAMILIES = {
 
   // ---- Per-section status dots: green once that section has anything filled in ----
   var SECTION_FIELDS = {
-    'sec-job':      ['customerName','jobNumber','salesRep'],
+    'sec-job':      ['customerName','jobNumber','salesRep','quantity','shipByDate','paymentTerms'],
     'sec-proof':    ['proofOptions','proofAttention','signOffDate','proofCustomDetails'],
     'sec-callouts': ['pliOnBack','arrow','pcNumber'],
-    'sec-art':      ['frontArt','backArt'],
+    'sec-art':      ['frontArt','backArt','frontArtPrevRef','backArtPrevRef'],
     'sec-tooling':  ['dieNumber','size','thickness'],
     'sec-rfid':     ['rfidInlayType','vingEncoding','uidRead','returnFile','lockSystem','lockSystemTech'],
-    'sec-magenc':   ['magEncodingType','magTracks','magEncodingDetails'],
+    'sec-magenc':   ['magEncodingType','magTracks','magLockType','magStripeColor','magEncodingDetails'],
     'sec-stock':    ['stock','stockColor'],
     'sec-press':    ['pressTarget','pressFrontFinish','pressBackFinish','frontColor','backColor','bleeds'],
-    'sec-silk':     ['silkFrontEffect','silkFrontTarget','silkFrontScreenNumber','silkBackEffect','silkBackTarget','silkBackScreenNumber'],
-    'sec-finish':   ['holePunch','holePunchDetails','shrinkWrapPacks','shrinkWrapSpecialDetails','sleeve','sleeveLabels'],
+    'sec-silk':     ['silkFrontEffect','silkFrontTarget','silkFrontScreenNumber','silkFrontEffectDetails','silkBackEffect','silkBackTarget','silkBackScreenNumber','silkBackEffectDetails'],
+    'sec-finish':   ['holePunch','holePunchDetails','shrinkWrapPacks','shrinkWrapSpecialDetails','sleeve','sleeveType','sleeveTypeDetails','sleeveLabels'],
     'sec-ship':     ['overageOK','shipEarly','undersOK'],
+    'sec-recipients': ['recipients'],
     'sec-notes':    ['instructions']
   };
   function updateSectionDots(){
@@ -1134,6 +1201,12 @@ var RFID_FAMILIES = {
   var silkBackScreenNumberField = document.getElementById('silkBackScreenNumberField');
   var shrinkWrapPacksGroup = document.querySelector('.btn-group[data-field="shrinkWrapPacks"]');
   var shrinkWrapSpecialField = document.getElementById('shrinkWrapSpecialField');
+  var frontArtGroup = document.querySelector('.btn-group[data-field="frontArt"]');
+  var frontArtPrevField = document.getElementById('frontArtPrevField');
+  var backArtGroup = document.querySelector('.btn-group[data-field="backArt"]');
+  var backArtPrevField = document.getElementById('backArtPrevField');
+  var sleeveTypeGroup = document.querySelector('.btn-group[data-field="sleeveType"]');
+  var sleeveTypeDetailsField = document.getElementById('sleeveTypeDetailsField');
 
   function onFieldChange(field){
     if (field === 'holePunch') holeField.style.display = (holeYN.value === 'Yes') ? 'flex' : 'none';
@@ -1141,6 +1214,9 @@ var RFID_FAMILIES = {
     if (field === 'silkFrontTarget') silkFrontScreenNumberField.style.display = (silkFrontTargetGroup.value === 'Archive') ? 'flex' : 'none';
     if (field === 'silkBackTarget') silkBackScreenNumberField.style.display = (silkBackTargetGroup.value === 'Archive') ? 'flex' : 'none';
     if (field === 'shrinkWrapPacks') shrinkWrapSpecialField.style.display = (shrinkWrapPacksGroup.value === 'Special') ? 'flex' : 'none';
+    if (field === 'frontArt') frontArtPrevField.style.display = (frontArtGroup.value === 'Previous') ? 'flex' : 'none';
+    if (field === 'backArt') backArtPrevField.style.display = (backArtGroup.value === 'Previous') ? 'flex' : 'none';
+    if (field === 'sleeveType') sleeveTypeDetailsField.style.display = (sleeveTypeGroup.value === 'Customer Specific') ? 'flex' : 'none';
     updateSectionDots();
   }
   document.querySelectorAll('input[data-field], textarea[data-field]').forEach(function(el){
@@ -1217,6 +1293,9 @@ var RFID_FAMILIES = {
     onFieldChange('silkFrontTarget');
     onFieldChange('silkBackTarget');
     onFieldChange('shrinkWrapPacks');
+    onFieldChange('frontArt');
+    onFieldChange('backArt');
+    onFieldChange('sleeveType');
     updateSectionDots();
     return mismatches;
   }
@@ -1317,6 +1396,9 @@ var RFID_FAMILIES = {
     onFieldChange('silkFrontTarget');
     onFieldChange('silkBackTarget');
     onFieldChange('shrinkWrapPacks');
+    onFieldChange('frontArt');
+    onFieldChange('backArt');
+    onFieldChange('sleeveType');
     resetSectionStates();
     toast('Form cleared');
   });
@@ -1382,7 +1464,7 @@ var RFID_FAMILIES = {
   }
 
   function buildSummaryText(){
-    var order = ['sec-job','sec-proof','sec-callouts','sec-art','sec-tooling','sec-rfid','sec-magenc','sec-stock','sec-press','sec-silk','sec-finish','sec-ship'];
+    var order = ['sec-job','sec-proof','sec-callouts','sec-art','sec-tooling','sec-rfid','sec-magenc','sec-stock','sec-press','sec-silk','sec-finish','sec-ship','sec-recipients'];
 
     var blocks = [];
     order.forEach(function(secId){
