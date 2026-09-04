@@ -1,7 +1,7 @@
 Option Explicit
 
 ' =============================================================================
-' PLI PERSO WORKBOOK -- Module1 (v3.10, 2026-09-03)
+' PLI PERSO WORKBOOK -- Module1 (v3.11, 2026-09-03)
 '
 ' The version is ALSO held in the MODULE_VERSION constant below and printed at
 ' the end of every Update Data run, so the build a workbook is actually running
@@ -13,6 +13,16 @@ Option Explicit
 '   ---------------------------------------------------------------------
 '   REVISION HISTORY
 '   ---------------------------------------------------------------------
+'   v3.11  2026-09-03
+'       * Fixed: black spacer rows between machine groups showed an empty
+'         Rdy checkbox. EnsureCheckboxFormats stamps the checkbox control
+'         across the whole contiguous I2:I<last> span before the row loop
+'         even runs, which includes every spacer row -- nothing had ever
+'         stripped it back off them. The row loop now collects each
+'         spacer row as it paints it, and right after the loop, each
+'         one's Rdy cell is ClearFormats'd (the only way to remove a cell
+'         control -- same finding as Press's ApplyRemoveCheckboxes) and
+'         its black fill reapplied, since ClearFormats wipes that too.
 '   v3.10  2026-09-03
 '       * Cards removed (not needed any more, per the user). Snapshot/
 '         restore, checkbox-format cloning, headers, and the hide-blank-
@@ -250,7 +260,8 @@ Private Const STALE_HUB_HOURS As Double = 12#
 '   v3.9  Ship Date and To Perso swapped back (A/B), nothing else moved
 '   v3.10 Cards removed; Week Start hidden, not removed; capacity table
 '         and everything after Rdy shifted one column left
-Private Const MODULE_VERSION As String = "v3.10"
+'   v3.11 Fixed: spacer rows no longer show an empty Rdy checkbox
+Private Const MODULE_VERSION As String = "v3.11"
 
 ' -----------------------------------------------------------------------------
 ' UPDATE DATA BUTTON -- second caption line and state colour (v3).
@@ -953,6 +964,15 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
 
     Dim rowIdx As Long, sd As Variant, wkStart As Variant
 
+    ' Rows painted black as machine-group spacers -- EnsureCheckboxFormats
+    ' (above) already stamped the checkbox format down the WHOLE
+    ' contiguous I2:I<expectedLast> span before this loop even ran, which
+    ' includes these rows, so a spacer row shows an empty checkbox glyph
+    ' unless something removes it. Collected here and cleaned up in one
+    ' pass right after the loop (2026-09.03 fix).
+    Dim sepRows As Collection
+    Set sepRows = New Collection
+
     For i = 1 To matchCount
         rowIdx = matchIdx(i)
 
@@ -961,6 +981,7 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
         ' Machine rows; done directly here since the spacer is structural.
         If i > 1 And matchMachine(i) <> prevMach Then
             ws.Range(ws.Cells(outRow, 1), ws.Cells(outRow, UBound(headers) + 1)).Interior.Color = RGB(0, 0, 0)
+            sepRows.Add outRow
             outRow = outRow + 1
         End If
         prevMach = matchMachine(i)
@@ -1004,6 +1025,19 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
 
         outRow = outRow + 1
     Next i
+
+    ' Strip the checkbox control back off every spacer row's Rdy cell.
+    ' ClearFormats is the only way to take a cell control off (same finding
+    ' as Press's ApplyRemoveCheckboxes -- there is no RemoveCheckbox
+    ' counterpart), which also wipes the black fill that cell got as part
+    ' of the whole-row spacer fill above, so it's reapplied right after.
+    Dim sr As Variant
+    For Each sr In sepRows
+        With ws.Cells(CLng(sr), 9)
+            .ClearFormats
+            .Interior.Color = RGB(0, 0, 0)
+        End With
+    Next sr
 
     Dim lastRow As Long: lastRow = outRow - 1
 
