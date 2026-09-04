@@ -1,7 +1,7 @@
 Option Explicit
 
 ' =============================================================================
-' PLI PERSO WORKBOOK -- Module1 (v3.16, 2026-09-03)
+' PLI PERSO WORKBOOK -- Module1 (v3.17, 2026-09-03)
 '
 ' The version is ALSO held in the MODULE_VERSION constant below and printed at
 ' the end of every Update Data run, so the build a workbook is actually running
@@ -13,6 +13,32 @@ Option Explicit
 '   ---------------------------------------------------------------------
 '   REVISION HISTORY
 '   ---------------------------------------------------------------------
+'   v3.17  2026-09-03
+'       * v3.16 cleared column I's spacer checkboxes -- which also proved
+'         the CellControl removal genuinely works on this build -- but the
+'         user then reported boxes still sitting in column H. H was CARDS
+'         in the original layout, so the old build painted checkboxes down
+'         it; nothing has ever taken a cell control off, so they survived
+'         the To Perso insert that turned H into Machine, and then the
+'         Cards removal, and were still there. Any column that held a
+'         checkbox in ANY past layout has the same problem.
+'         Fixed as an invariant rather than another per-column patch:
+'         immediately after the A:J ClearContents, every data column
+'         except Rdy (I) has its cell controls stripped, so nothing in
+'         A:J carries one; EnsureCheckboxFormats then puts them back on
+'         exactly column I. Placed at that point on purpose -- the cells
+'         are empty right then, so RemoveCellCheckbox's last-resort
+'         full-paste has nothing it could destroy.
+'         The strip scans CELL BY CELL and removes only the cells that
+'         actually carry a control. Handing whole columns to
+'         RemoveCellCheckbox would have silently done nothing: on a MIXED
+'         range Range.CellControl returns Nothing, which the function
+'         cannot tell apart from "already clean". The spacer-row removal
+'         works precisely because every cell in that union has a
+'         checkbox; this union is built to share that property.
+'       * DiagnoseTracieCheckboxes now lists which COLUMNS on the spacer
+'         row carry a checkbox, not just column I. Reporting I alone is
+'         exactly what let H hide through three rounds of this.
 '   v3.16  2026-09-03
 '       * v3.15 still did not clear them: the diagnostic came back
 '         "CellControl: PRESENT, Type 2" after a build whose removal chain
@@ -349,8 +375,11 @@ Private Const STALE_HUB_HOURS As Double = 12#
 '         of which turned out to be the right one on this build
 '   v3.16 Three more removal candidates incl. a full-paste last resort;
 '         + ProbeCellCheckboxRemoval to settle it by experiment; the run
-'         now reports what the spacer cleanup actually did
-Private Const MODULE_VERSION As String = "v3.16"
+'         now reports what the spacer cleanup actually did. Cleared
+'         column I -- and proved the removal works
+'   v3.17 Stale checkboxes cleared from EVERY data column except Rdy, not
+'         just column I. H had been carrying them since it was Cards
+Private Const MODULE_VERSION As String = "v3.17"
 
 ' -----------------------------------------------------------------------------
 ' UPDATE DATA BUTTON -- second caption line and state colour (v3).
@@ -998,6 +1027,68 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
     clearRange.ClearContents
     clearRange.Interior.Pattern = xlNone
     clearRange.FormatConditions.Delete
+
+    ' Strip in-cell checkboxes from EVERY data column except Rdy (I), which
+    ' EnsureCheckboxFormats re-applies a few lines below.
+    '
+    ' 2026-09.03: column H is the live example of why this has to be a
+    ' blanket rule rather than a per-column patch. H was CARDS in the
+    ' original layout, so the old build painted checkboxes down it -- and
+    ' since nothing in this workbook has ever taken a cell control off
+    ' (ClearFormats does not, proven by DiagnoseTracieCheckboxes), they
+    ' survived the To Perso insert that made H the Machine column, and then
+    ' the Cards removal, and were still showing. Any column that ever held
+    ' a checkbox in any past layout has the same problem, so rather than
+    ' chase them one at a time the invariant is asserted outright: after
+    ' this line, nothing in A:J carries a control; after
+    ' EnsureCheckboxFormats, exactly column I does.
+    '
+    ' Placed HERE, immediately after ClearContents, on purpose: the cells
+    ' are empty at this moment, so RemoveCellCheckbox's last-resort
+    ' full-paste has nothing it could destroy. The write loop repopulates
+    ' them straight afterwards.
+    '
+    ' The scan is CELL BY CELL, collecting only the cells that actually
+    ' carry a control, rather than handing RemoveCellCheckbox whole
+    ' columns. Range.CellControl on a MIXED range (some cells with a
+    ' control, some without) hands back Nothing, and Nothing is
+    ' indistinguishable from "this range is already clean" -- so a whole-
+    ' column call would silently do nothing on exactly the columns that
+    ' need it. The spacer-row removal works because every cell in that
+    ' union uniformly has a checkbox; this union is built to have the same
+    ' property. It also keeps the destructive last-resort paste confined
+    ' to cells that genuinely need it.
+    Dim strayLast As Long
+    strayLast = ws.UsedRange.Row + ws.UsedRange.Rows.Count - 1
+    If strayLast < 2 Then strayLast = 2
+
+    Dim strayCol As Long, strayRow As Long
+    Dim strayCells As Range, strayCell As Range
+    Dim strayCount As Long
+    For strayCol = 1 To 10
+        If strayCol <> 9 Then
+            For strayRow = 1 To strayLast
+                Set strayCell = ws.Cells(strayRow, strayCol)
+                If Not CellCheckboxGone(strayCell) Then
+                    strayCount = strayCount + 1
+                    If strayCells Is Nothing Then
+                        Set strayCells = strayCell
+                    Else
+                        Set strayCells = Union(strayCells, strayCell)
+                    End If
+                End If
+            Next strayRow
+        End If
+    Next strayCol
+
+    If Not strayCells Is Nothing Then
+        If Not RemoveCellCheckbox(strayCells) Then
+            gSetupWarnings = gSetupWarnings & vbCrLf & _
+                "- " & strayCount & " leftover checkbox cells outside the Rdy column " & _
+                "could not be removed. Run ProbeCellCheckboxRemoval (Alt+F8) and " & _
+                "report which candidate line says REMOVED IT."
+        End If
+    End If
 
     ' Column K (was L, was J, was K again before that -- see the column
     ' history in the revision notes above) carries STALE conditional-
@@ -2894,6 +2985,20 @@ Public Sub DiagnoseTracieCheckboxes()
     Err.Clear
     On Error GoTo 0
     rpt = rpt & "  CellControl: " & hasCtl & vbCrLf
+
+    ' --- every data column on that row, not just Rdy --------------------
+    ' 2026-09.03: reporting column I alone hid the fact that column H was
+    ' carrying checkboxes too, left over from when H was Cards. Only I
+    ' should ever have one.
+    Dim dc As Long, ctlCols As String
+    rpt = rpt & vbCrLf & "Checkbox by column on row " & sepRow & _
+          " (only I should have one):" & vbCrLf & "  "
+    For dc = 1 To 10
+        If Not CellCheckboxGone(ws.Cells(sepRow, dc)) Then
+            ctlCols = ctlCols & Split(ws.Cells(1, dc).Address(True, False), "$")(0) & " "
+        End If
+    Next dc
+    rpt = rpt & IIf(ctlCols = "", "(none)", ctlCols) & vbCrLf
 
     ' --- any shape sitting on that row ---------------------------------
     Dim shp As Shape, shpRow As Long, nShapes As Long
