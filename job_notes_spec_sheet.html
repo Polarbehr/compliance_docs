@@ -76,23 +76,26 @@
 
   /* ---------- Layout ---------- */
   .shell{max-width:1180px;margin:0 auto;padding:24px;}
-  .layout{display:grid;grid-template-columns:230px 1fr;gap:24px;align-items:start;}
-  @media (max-width:860px){.layout{grid-template-columns:1fr;} nav.jump{position:static;order:2;}}
+  .layout{display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start;}
+  @media (max-width:960px){.layout{grid-template-columns:1fr;} nav.jump{position:static;order:2;}}
 
   nav.jump{
     position:sticky; top:16px;
     background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
     padding:14px; box-shadow:var(--shadow);
   }
-  nav.jump h3{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;padding:0 6px;}
-  nav.jump .hint{font-size:11px;color:var(--muted);padding:0 6px;margin-bottom:10px;display:block;line-height:1.5;}
-  .sec-toggle{
+  nav.jump h3{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding:0 6px;}
+  nav.jump .hint{font-size:11px;color:var(--muted);padding:8px 6px 0;margin-top:6px;border-top:1px solid var(--line);display:block;line-height:1.5;}
+  .nav-cols{display:grid; grid-template-columns:1fr 1fr; gap:0 10px;}
+  .nav-col-label{font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);margin:0 0 6px;padding:0 6px;}
+
+  .sec-static, .sec-toggle{
     display:block; width:100%; text-align:left;
     background:none; border:1.5px solid transparent; color:var(--ink);
-    font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer;
-    padding:9px 10px; border-radius:8px; margin-bottom:4px; transition:all .15s;
+    font-size:12.5px; font-weight:600; font-family:inherit; cursor:pointer; line-height:1.35;
+    padding:8px 8px; border-radius:8px; margin-bottom:4px; transition:all .15s;
   }
-  .sec-toggle:hover{background:#f4f1ea;}
+  .sec-static:hover, .sec-toggle:hover{background:#f4f1ea;}
   .sec-toggle.active{
     background:rgba(18,183,106,.08);
     border-color:var(--good);
@@ -217,7 +220,7 @@
   .ic.c1{background:var(--cyan);} .ic.c2{background:var(--magenta);} .ic.c3{background:var(--orange);}
   .ic.c4{background:#7c3aed;} .ic.c5{background:#0ea5a4;} .ic.c6{background:var(--key);}
   .ic.c7{background:#d946ef;} .ic.c8{background:#f59e0b;} .ic.c9{background:var(--good);}
-  .ic.c10{background:#334155;} .ic.c11{background:#2563eb;}
+  .ic.c10{background:#334155;} .ic.c11{background:#2563eb;} .ic.c12{background:#92400e;}
 
   @media print{
     header.top, nav.jump, .actionbar, #toast, .guide-overlay{display:none !important;}
@@ -344,19 +347,28 @@
 
     <nav class="jump" id="jumpNav">
       <h3>Job Sections</h3>
-      <span class="hint">Click a section to include it (green halo) or leave it off (grey). Off sections are hidden from the form, export, and print.</span>
-      <button type="button" class="sec-toggle active" data-target="sec-job" aria-pressed="true">Job Info</button>
-      <button type="button" class="sec-toggle active" data-target="sec-proof" aria-pressed="true">Proof &amp; Sign-Off</button>
-      <button type="button" class="sec-toggle active" data-target="sec-callouts" aria-pressed="true">Job Callouts</button>
-      <button type="button" class="sec-toggle active" data-target="sec-art" aria-pressed="true">Artwork</button>
-      <button type="button" class="sec-toggle active" data-target="sec-tooling" aria-pressed="true">Tooling &amp; Die</button>
-      <button type="button" class="sec-toggle active" data-target="sec-rfid" aria-pressed="true">RFID Inlay</button>
-      <button type="button" class="sec-toggle active" data-target="sec-stock" aria-pressed="true">Stock &amp; Substrate</button>
-      <button type="button" class="sec-toggle active" data-target="sec-press" aria-pressed="true">Press Specs</button>
-      <button type="button" class="sec-toggle active" data-target="sec-silk" aria-pressed="true">Silk Screen</button>
-      <button type="button" class="sec-toggle active" data-target="sec-finish" aria-pressed="true">Finishing &amp; Packaging</button>
-      <button type="button" class="sec-toggle active" data-target="sec-ship" aria-pressed="true">Overs / Unders / Ship</button>
-      <button type="button" class="sec-toggle active" data-target="sec-notes" aria-pressed="true">Special Instructions</button>
+      <div class="nav-cols">
+        <div class="nav-col">
+          <div class="nav-col-label">Required</div>
+          <button type="button" class="sec-static" data-target="sec-job">Job Info</button>
+          <button type="button" class="sec-static" data-target="sec-proof">Proof &amp; Sign-Off</button>
+          <button type="button" class="sec-static" data-target="sec-callouts">Job Callouts</button>
+          <button type="button" class="sec-static" data-target="sec-art">Artwork</button>
+          <button type="button" class="sec-static" data-target="sec-tooling">Tooling &amp; Die</button>
+          <button type="button" class="sec-static" data-target="sec-stock">Stock &amp; Substrate</button>
+          <button type="button" class="sec-static" data-target="sec-press">Press Specs</button>
+          <button type="button" class="sec-static" data-target="sec-finish">Finishing &amp; Packaging</button>
+          <button type="button" class="sec-static" data-target="sec-ship">Overs / Unders / Ship</button>
+          <button type="button" class="sec-static" data-target="sec-notes">Special Instructions</button>
+        </div>
+        <div class="nav-col">
+          <div class="nav-col-label">Optional</div>
+          <button type="button" class="sec-toggle active" data-target="sec-rfid" aria-pressed="true">RFID Inlay</button>
+          <button type="button" class="sec-toggle active" data-target="sec-silk" aria-pressed="true">Silk Screen</button>
+          <button type="button" class="sec-toggle active" data-target="sec-magenc" aria-pressed="true">Magnetic Encoding</button>
+        </div>
+      </div>
+      <span class="hint">Optional sections glow green when included; click to leave one off. Off sections are hidden from the form, export, and print.</span>
     </nav>
 
     <main>
@@ -382,10 +394,6 @@
               <label>Proof Options <span class="req">*</span></label>
               <div class="btn-group" data-field="proofOptions" data-label="Proof Options" data-options="proofOptions"></div>
             </div>
-            <div class="field" id="proofCustomField" style="display:none;">
-              <label>Customer Specific — Details</label>
-              <input type="text" data-field="proofCustomDetails" data-label="Proof Customer Specific Details" placeholder="Describe the customer's specific proof requirement">
-            </div>
             <div class="field">
               <label>Proof to Attention</label>
               <input type="text" data-field="proofAttention" data-label="Proof to Attention" placeholder="Name / email of approver">
@@ -393,6 +401,10 @@
             <div class="field">
               <label>Sign Off Date</label>
               <input type="date" data-field="signOffDate" data-label="Sign Off Date">
+            </div>
+            <div class="field span-2" id="proofCustomField" style="display:none;">
+              <label>Customer Specific — Details</label>
+              <input type="text" data-field="proofCustomDetails" data-label="Proof Customer Specific Details" placeholder="Describe the customer's specific proof requirement">
             </div>
           </div>
         </div>
@@ -464,6 +476,27 @@
               </div>
             </div>
             <div class="field"><label>Ving Encoding</label><div class="yn" data-field="vingEncoding" data-label="Ving Encoding"><button type="button" class="yes">Yes</button></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MAGNETIC ENCODING -->
+      <section class="card" id="sec-magenc">
+        <div class="head"><div class="ic c12">🧲</div><div><h2>Magnetic Encoding</h2><p>Mag-stripe format and track data for this job.</p></div></div>
+        <div class="body">
+          <div class="grid">
+            <div class="field">
+              <label>Encoding Type</label>
+              <div class="btn-group" data-field="magEncodingType" data-label="Magnetic Encoding Type" data-options="magEncodingType"></div>
+            </div>
+            <div class="field">
+              <label>Tracks Encoded</label>
+              <div class="btn-group" data-field="magTracks" data-label="Tracks Encoded" data-options="magTracks"></div>
+            </div>
+            <div class="field span-2">
+              <label>Encoding Details</label>
+              <input type="text" data-field="magEncodingDetails" data-label="Magnetic Encoding Details" placeholder="Track data format, facility code, custom notes">
+            </div>
           </div>
         </div>
       </section>
@@ -625,12 +658,13 @@
         <div class="head"><div class="ic c1">📋</div><div><h2>1. Filling Out the Form</h2></div></div>
         <div class="body">
           <p>The form is split into sections — Job Info, Proof &amp; Sign-Off, Job Callouts, Artwork, Tooling &amp; Die,
-          RFID Inlay, Stock &amp; Substrate, Press Specs, Silk Screen, Finishing &amp; Packaging, Overs/Unders/Shipping,
-          and Special Instructions.</p>
-          <p><strong>Turning sections on/off</strong> — every section has a button in the left sidebar. A green glowing
-          halo means that section is included; a plain grey button means it's turned off. Turn off whatever doesn't
-          apply to this job (e.g. no RFID, no Silk Screen) — off sections disappear from the form itself and are left
-          out of anything you export, copy, or print.</p>
+          Stock &amp; Substrate, Press Specs, Finishing &amp; Packaging, Overs/Unders/Shipping, and Special
+          Instructions, plus three optional add-on sections: RFID Inlay, Silk Screen, and Magnetic Encoding.</p>
+          <p>The left sidebar lists them in two columns. The <strong>Required</strong> column is just a jump list —
+          click a name to scroll straight to that section; those sections always stay in the form. The
+          <strong>Optional</strong> column is where RFID Inlay, Silk Screen, and Magnetic Encoding live — click one
+          to turn it on (green glowing halo) or off (plain grey). Off sections disappear from the form itself and
+          are left out of anything you export, copy, or print.</p>
           <div class="grid2">
             <div>
               <p><strong>Button-group fields</strong> — click a button to select it (e.g. Proof Options, Press Target,
@@ -817,7 +851,9 @@ var DROPDOWN_OPTIONS = {
   pressFinish:       ["Gloss", "Satin", "Matte", "UV", "Raw"],
   bleeds:            ["Front", "Back", "Both", "None"],
   silkScreenTarget:  ["Archive", "New"],
-  screenType:        ["Flood", "Spot"]
+  screenType:        ["Flood", "Spot"],
+  magEncodingType:   ["Hi-Co", "Lo-Co"],
+  magTracks:         ["Track 1", "Track 2", "Track 3", "All Tracks"]
 };
 
 /* RFID Inlay Type is a two-step picker: pick a family button, then a row of
@@ -963,7 +999,15 @@ var RFID_FAMILIES = {
     if (field === 'proofOptions') proofCustomField.style.display = (proofOptionsGroup.value === 'Customer Specific') ? 'flex' : 'none';
   }
 
-  // ---- Section on/off toggles ----
+  // ---- Required sections: click to jump/scroll to them (always included, no toggle) ----
+  document.querySelectorAll('.sec-static').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var target = document.getElementById(btn.getAttribute('data-target'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  // ---- Optional sections: on/off toggles ----
   document.querySelectorAll('.sec-toggle').forEach(function(btn){
     btn.addEventListener('click', function(){
       var active = !btn.classList.contains('active');
@@ -1151,7 +1195,7 @@ var RFID_FAMILIES = {
     lines.push('PRESS JOB SPEC SHEET');
     lines.push('Generated: ' + new Date().toLocaleString());
     lines.push('');
-    var order = ['sec-job','sec-proof','sec-callouts','sec-art','sec-tooling','sec-rfid','sec-stock','sec-press','sec-silk','sec-finish','sec-ship'];
+    var order = ['sec-job','sec-proof','sec-callouts','sec-art','sec-tooling','sec-rfid','sec-magenc','sec-stock','sec-press','sec-silk','sec-finish','sec-ship'];
     order.forEach(function(secId){
       var card = document.getElementById(secId);
       if (card.hidden) return;
