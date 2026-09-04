@@ -73,13 +73,10 @@
     transition:background .15s; cursor:pointer; font-family:inherit; appearance:none;
   }
   .help-link:hover{background:rgba(255,255,255,.18);}
-  .progress-track{height:8px;border-radius:999px;background:#eee9df;overflow:hidden;}
-  .progress-fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--yellow));transition:width .3s ease;}
-  .progress-num{font-size:13px;font-weight:700;margin-top:6px;text-align:right;color:var(--ink);}
 
   /* ---------- Layout ---------- */
   .shell{max-width:1180px;margin:0 auto;padding:24px;}
-  .layout{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start;}
+  .layout{display:grid;grid-template-columns:230px 1fr;gap:24px;align-items:start;}
   @media (max-width:860px){.layout{grid-template-columns:1fr;} nav.jump{position:static;order:2;}}
 
   nav.jump{
@@ -87,17 +84,21 @@
     background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
     padding:14px; box-shadow:var(--shadow);
   }
-  nav.jump h3{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding:0 6px;}
-  nav.jump a{
-    display:flex; align-items:center; gap:8px;
-    text-decoration:none; color:var(--ink); font-size:13.5px; font-weight:600;
-    padding:8px 8px; border-radius:8px; margin-bottom:2px;
+  nav.jump h3{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;padding:0 6px;}
+  nav.jump .hint{font-size:11px;color:var(--muted);padding:0 6px;margin-bottom:10px;display:block;line-height:1.5;}
+  .sec-toggle{
+    display:block; width:100%; text-align:left;
+    background:none; border:1.5px solid transparent; color:var(--ink);
+    font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer;
+    padding:9px 10px; border-radius:8px; margin-bottom:4px; transition:all .15s;
   }
-  nav.jump a:hover{background:#f4f1ea;}
-  nav.jump a .dot{width:8px;height:8px;border-radius:50%;background:var(--line);flex:none;}
-  nav.jump a.done .dot{background:var(--good);}
-  .nav-progress{margin-top:14px; padding:14px 10px 4px; border-top:1px solid var(--line);}
-  .nav-progress .np-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .sec-toggle:hover{background:#f4f1ea;}
+  .sec-toggle.active{
+    background:rgba(18,183,106,.08);
+    border-color:var(--good);
+    box-shadow:0 0 0 3px rgba(18,183,106,.16), 0 0 12px 1px rgba(18,183,106,.45);
+    color:#0e5c33;
+  }
 
   main{display:flex;flex-direction:column;gap:20px;}
 
@@ -121,35 +122,42 @@
   .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px 20px;}
   .grid.cols-3{grid-template-columns:repeat(3,1fr);}
   @media (max-width:640px){.grid,.grid.cols-3{grid-template-columns:1fr;}}
-  .field{display:flex;flex-direction:column;gap:6px;}
+  .field{display:flex;flex-direction:column;gap:8px;}
   .field.span-2{grid-column:span 2;}
   @media (max-width:640px){.field.span-2{grid-column:span 1;}}
   .field label{font-size:12.5px;font-weight:700;color:#3a3530;display:flex;justify-content:space-between;}
   .field label .req{color:var(--magenta);font-weight:800;}
   .field input[type="text"],
   .field input[type="date"],
-  .field select,
   .field textarea{
     border:1.5px solid var(--line); border-radius:9px; padding:10px 12px;
     font-size:14px; font-family:inherit; color:var(--ink); background:#fffefc;
     transition:border-color .15s, box-shadow .15s;
   }
   .field textarea{resize:vertical;min-height:70px;}
-  .field input:focus, .field select:focus, .field textarea:focus{
+  .field input:focus, .field textarea:focus{
     outline:none; border-color:var(--cyan); box-shadow:0 0 0 3px rgba(0,174,239,.15);
   }
-  .field input.invalid, .field select.invalid{border-color:var(--bad); box-shadow:0 0 0 3px rgba(225,29,72,.12);}
   .hint{font-size:11.5px;color:var(--muted);}
 
-  /* Yes/No pill toggle */
-  .yn{display:flex;gap:8px;}
+  /* Button-group (replaces dropdowns) */
+  .btn-group{display:flex;flex-wrap:wrap;gap:8px;}
+  .btn-group .opt{
+    padding:9px 16px; border-radius:9px; border:1.5px solid var(--line);
+    background:#fffefc; font-weight:700; font-size:13px; cursor:pointer; color:var(--muted);
+    transition:all .15s;
+  }
+  .btn-group .opt.active{background:rgba(0,174,239,.12); border-color:var(--cyan); color:#036b96;}
+  #rfidFamilyGroup .opt.active{background:rgba(236,0,140,.10); border-color:var(--magenta); color:#a3196a;}
+
+  /* Single Yes toggle (blank/off = No) */
+  .yn{display:inline-flex;}
   .yn button{
-    flex:1; padding:9px 10px; border-radius:9px; border:1.5px solid var(--line);
+    padding:9px 22px; border-radius:9px; border:1.5px solid var(--line);
     background:#fffefc; font-weight:700; font-size:13px; cursor:pointer; color:var(--muted);
     transition:all .15s;
   }
   .yn button.yes.active{background:rgba(18,183,106,.12); border-color:var(--good); color:var(--good);}
-  .yn button.no.active{background:rgba(225,29,72,.10); border-color:var(--bad); color:var(--bad);}
 
   .subpanel{
     margin-top:14px; padding:14px; border-radius:10px;
@@ -216,9 +224,10 @@
     body{padding:0;background:#fff;}
     .card{box-shadow:none; border:1px solid #ccc; break-inside:avoid; margin-bottom:10px;}
     .layout{display:block;}
-    .field input,.field select,.field textarea{border:1px solid #999; background:#fff;}
-    .yn button{display:none;}
+    .field input,.field textarea{border:1px solid #999; background:#fff;}
+    .yn button, .btn-group .opt, #rfidFamilyGroup{display:none;}
     .yn::after{content:attr(data-print-val); font-weight:700;}
+    .btn-group[data-field]::after{content:attr(data-print-val); font-weight:700;}
   }
 
   /* ---------- Guide overlay (How to Use This Form) ---------- */
@@ -324,7 +333,7 @@
   <div class="draft-warning" id="draftWarning" hidden>
     <div class="dw-icon">⚠️</div>
     <div class="dw-body">
-      <strong>Some values from your saved draft no longer match current dropdown options</strong>
+      <strong>Some values from your loaded draft no longer match current button options</strong>
       <ul id="draftWarningList"></ul>
       <p class="hint">This happens when an option was renamed or removed since the draft was saved. Everything else loaded normally.</p>
     </div>
@@ -335,24 +344,19 @@
 
     <nav class="jump" id="jumpNav">
       <h3>Job Sections</h3>
-      <a href="#sec-job"><span class="dot"></span> Job Info</a>
-      <a href="#sec-proof"><span class="dot"></span> Proof &amp; Sign-Off</a>
-      <a href="#sec-callouts"><span class="dot"></span> Job Callouts</a>
-      <a href="#sec-art"><span class="dot"></span> Artwork</a>
-      <a href="#sec-tooling"><span class="dot"></span> Tooling &amp; Die</a>
-      <a href="#sec-rfid"><span class="dot"></span> RFID Inlay</a>
-      <a href="#sec-stock"><span class="dot"></span> Stock &amp; Substrate</a>
-      <a href="#sec-press"><span class="dot"></span> Press Specs</a>
-      <a href="#sec-silk"><span class="dot"></span> Silk Screen</a>
-      <a href="#sec-finish"><span class="dot"></span> Finishing &amp; Packaging</a>
-      <a href="#sec-ship"><span class="dot"></span> Overs / Unders / Ship</a>
-      <a href="#sec-notes"><span class="dot"></span> Special Instructions</a>
-
-      <div class="nav-progress">
-        <div class="np-label">Form Completion</div>
-        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="progress-num" id="progressNum">0%</div>
-      </div>
+      <span class="hint">Click a section to include it (green halo) or leave it off (grey). Off sections are hidden from the form, export, and print.</span>
+      <button type="button" class="sec-toggle active" data-target="sec-job" aria-pressed="true">Job Info</button>
+      <button type="button" class="sec-toggle active" data-target="sec-proof" aria-pressed="true">Proof &amp; Sign-Off</button>
+      <button type="button" class="sec-toggle active" data-target="sec-callouts" aria-pressed="true">Job Callouts</button>
+      <button type="button" class="sec-toggle active" data-target="sec-art" aria-pressed="true">Artwork</button>
+      <button type="button" class="sec-toggle active" data-target="sec-tooling" aria-pressed="true">Tooling &amp; Die</button>
+      <button type="button" class="sec-toggle active" data-target="sec-rfid" aria-pressed="true">RFID Inlay</button>
+      <button type="button" class="sec-toggle active" data-target="sec-stock" aria-pressed="true">Stock &amp; Substrate</button>
+      <button type="button" class="sec-toggle active" data-target="sec-press" aria-pressed="true">Press Specs</button>
+      <button type="button" class="sec-toggle active" data-target="sec-silk" aria-pressed="true">Silk Screen</button>
+      <button type="button" class="sec-toggle active" data-target="sec-finish" aria-pressed="true">Finishing &amp; Packaging</button>
+      <button type="button" class="sec-toggle active" data-target="sec-ship" aria-pressed="true">Overs / Unders / Ship</button>
+      <button type="button" class="sec-toggle active" data-target="sec-notes" aria-pressed="true">Special Instructions</button>
     </nav>
 
     <main>
@@ -374,9 +378,13 @@
         <div class="head"><div class="ic c2">✅</div><div><h2>Proof &amp; Sign-Off</h2><p>How the proof is generated and who approves it.</p></div></div>
         <div class="body">
           <div class="grid">
-            <div class="field">
+            <div class="field span-2">
               <label>Proof Options <span class="req">*</span></label>
-              <select data-field="proofOptions" data-label="Proof Options" data-options="proofOptions" required></select>
+              <div class="btn-group" data-field="proofOptions" data-label="Proof Options" data-options="proofOptions"></div>
+            </div>
+            <div class="field" id="proofCustomField" style="display:none;">
+              <label>Customer Specific — Details</label>
+              <input type="text" data-field="proofCustomDetails" data-label="Proof Customer Specific Details" placeholder="Describe the customer's specific proof requirement">
             </div>
             <div class="field">
               <label>Proof to Attention</label>
@@ -392,12 +400,12 @@
 
       <!-- CALLOUTS -->
       <section class="card" id="sec-callouts">
-        <div class="head"><div class="ic c3">📌</div><div><h2>Job Callouts</h2><p>Standard yes/no callouts sales needs to flag for prepress.</p></div></div>
+        <div class="head"><div class="ic c3">📌</div><div><h2>Job Callouts</h2><p>Standard callouts sales needs to flag for prepress. Leave off = No.</p></div></div>
         <div class="body">
           <div class="grid cols-3">
-            <div class="field"><label>PLI on Back</label><div class="yn" data-field="pliOnBack" data-label="PLI on Back"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
-            <div class="field"><label>Arrow</label><div class="yn" data-field="arrow" data-label="Arrow"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
-            <div class="field"><label>P# / C#</label><div class="yn" data-field="pcNumber" data-label="P#/C#"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+            <div class="field"><label>PLI on Back</label><div class="yn" data-field="pliOnBack" data-label="PLI on Back"><button type="button" class="yes">Yes</button></div></div>
+            <div class="field"><label>Arrow</label><div class="yn" data-field="arrow" data-label="Arrow"><button type="button" class="yes">Yes</button></div></div>
+            <div class="field"><label>P# / C#</label><div class="yn" data-field="pcNumber" data-label="P#/C#"><button type="button" class="yes">Yes</button></div></div>
           </div>
         </div>
       </section>
@@ -409,11 +417,11 @@
           <div class="grid">
             <div class="field">
               <label>Front Art</label>
-              <select data-field="frontArt" data-label="Front Art" data-options="artStatus"></select>
+              <div class="btn-group" data-field="frontArt" data-label="Front Art" data-options="artStatus"></div>
             </div>
             <div class="field">
               <label>Back Art</label>
-              <select data-field="backArt" data-label="Back Art" data-options="artStatus"></select>
+              <div class="btn-group" data-field="backArt" data-label="Back Art" data-options="artStatus"></div>
             </div>
           </div>
         </div>
@@ -445,14 +453,17 @@
             <path d="M44.05 14.80 A21 21 0 0 1 44.05 49.20" stroke="#FFD500" stroke-width="4.4" stroke-linecap="round"/>
             <path d="M19.95 14.80 A21 21 0 0 0 19.95 49.20" stroke="#FFD500" stroke-width="4.4" stroke-linecap="round"/>
           </svg>
-        </div><div><h2>RFID Inlay</h2><p>Inlay chip type and encoding requirements for this job.</p></div></div>
+        </div><div><h2>RFID Inlay</h2><p>Pick a chip family, then the specific type. Ving Encoding: leave off = No.</p></div></div>
         <div class="body">
           <div class="grid">
-            <div class="field">
+            <div class="field span-2">
               <label>RFID Inlay Type</label>
-              <select data-field="rfidInlayType" data-label="RFID Inlay Type" data-options="rfidInlayType"></select>
+              <div class="btn-group" id="rfidFamilyGroup"></div>
+              <div class="subpanel" id="rfidTypePanel">
+                <div class="btn-group" id="rfidTypeGroup" data-field="rfidInlayType" data-label="RFID Inlay Type"></div>
+              </div>
             </div>
-            <div class="field"><label>Ving Encoding</label><div class="yn" data-field="vingEncoding" data-label="Ving Encoding"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+            <div class="field"><label>Ving Encoding</label><div class="yn" data-field="vingEncoding" data-label="Ving Encoding"><button type="button" class="yes">Yes</button></div></div>
           </div>
         </div>
       </section>
@@ -475,21 +486,21 @@
           <div class="grid">
             <div class="field span-2">
               <label>Press Target</label>
-              <select data-field="pressTarget" data-label="Press Target" data-options="pressTarget"></select>
+              <div class="btn-group" data-field="pressTarget" data-label="Press Target" data-options="pressTarget"></div>
             </div>
             <div class="field">
               <label>Press Front Finish</label>
-              <select data-field="pressFrontFinish" data-label="Press Front Finish" data-options="pressFinish"></select>
+              <div class="btn-group" data-field="pressFrontFinish" data-label="Press Front Finish" data-options="pressFinish"></div>
             </div>
             <div class="field">
               <label>Press Back Finish</label>
-              <select data-field="pressBackFinish" data-label="Press Back Finish" data-options="pressFinish"></select>
+              <div class="btn-group" data-field="pressBackFinish" data-label="Press Back Finish" data-options="pressFinish"></div>
             </div>
             <div class="field"><label>Front Color</label><input type="text" data-field="frontColor" data-label="Front Color" placeholder="# of colors / PMS codes"></div>
             <div class="field"><label>Back Color</label><input type="text" data-field="backColor" data-label="Back Color" placeholder="# of colors / PMS codes"></div>
             <div class="field span-2">
               <label>Bleeds</label>
-              <select data-field="bleeds" data-label="Bleeds" data-options="bleeds"></select>
+              <div class="btn-group" data-field="bleeds" data-label="Bleeds" data-options="bleeds"></div>
             </div>
           </div>
         </div>
@@ -500,17 +511,17 @@
         <div class="head"><div class="ic c7">🧵</div><div><h2>Silk Screen</h2><p>Only applies when this job requires a silk screen pass.</p></div></div>
         <div class="body">
           <div class="grid">
-            <div class="field"><label>Silk Screen</label><div class="yn" data-field="silkScreen" data-label="Silk Screen"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+            <div class="field"><label>Silk Screen</label><div class="yn" data-field="silkScreen" data-label="Silk Screen"><button type="button" class="yes">Yes</button></div></div>
           </div>
           <div class="subpanel" id="silkPanel">
             <div class="grid">
               <div class="field">
                 <label>Silk Screen Target</label>
-                <select data-field="silkScreenTarget" data-label="Silk Screen Target" data-options="silkScreenTarget"></select>
+                <div class="btn-group" data-field="silkScreenTarget" data-label="Silk Screen Target" data-options="silkScreenTarget"></div>
               </div>
               <div class="field">
                 <label>Screen Type</label>
-                <select data-field="screenType" data-label="Screen Type" data-options="screenType"></select>
+                <div class="btn-group" data-field="screenType" data-label="Screen Type" data-options="screenType"></div>
               </div>
               <div class="field span-2">
                 <label>Screen Effect — Details</label>
@@ -526,7 +537,7 @@
         <div class="head"><div class="ic c8">📦</div><div><h2>Finishing &amp; Packaging</h2><p>Post-press operations and how the job ships out.</p></div></div>
         <div class="body">
           <div class="grid">
-            <div class="field"><label>Hole Punch</label><div class="yn" data-field="holePunch" data-label="Hole Punch"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+            <div class="field"><label>Hole Punch</label><div class="yn" data-field="holePunch" data-label="Hole Punch"><button type="button" class="yes">Yes</button></div></div>
             <div class="field" id="holePunchDetailsField" style="display:none;"><label>Hole Punch — Details</label><input type="text" data-field="holePunchDetails" data-label="Hole Punch Details" placeholder="Location, size, quantity"></div>
           </div>
           <div class="grid" style="margin-top:16px;">
@@ -539,12 +550,12 @@
 
       <!-- SHIP / TOLERANCE -->
       <section class="card" id="sec-ship">
-        <div class="head"><div class="ic c9">🚚</div><div><h2>Overs / Unders / Shipping</h2><p>Quantity tolerances and shipping timing.</p></div></div>
+        <div class="head"><div class="ic c9">🚚</div><div><h2>Overs / Unders / Shipping</h2><p>Quantity tolerances and shipping timing. Leave off = No.</p></div></div>
         <div class="body">
           <div class="grid cols-3">
-            <div class="field"><label>Overage OK</label><div class="yn" data-field="overageOK" data-label="Overage OK"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
-            <div class="field"><label>Ship Early</label><div class="yn" data-field="shipEarly" data-label="Ship Early"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
-            <div class="field"><label>Unders OK</label><div class="yn" data-field="undersOK" data-label="Unders OK"><button type="button" class="yes">Yes</button><button type="button" class="no">No</button></div></div>
+            <div class="field"><label>Overage OK</label><div class="yn" data-field="overageOK" data-label="Overage OK"><button type="button" class="yes">Yes</button></div></div>
+            <div class="field"><label>Ship Early</label><div class="yn" data-field="shipEarly" data-label="Ship Early"><button type="button" class="yes">Yes</button></div></div>
+            <div class="field"><label>Unders OK</label><div class="yn" data-field="undersOK" data-label="Unders OK"><button type="button" class="yes">Yes</button></div></div>
           </div>
         </div>
       </section>
@@ -577,6 +588,8 @@
   </div>
 </div>
 
+<input type="file" id="draftFileInput" accept="application/json,.json" hidden>
+
 <div id="toast"></div>
 
 <div class="guide-overlay" id="guideOverlay" hidden>
@@ -595,8 +608,8 @@
 
       <div class="intro">
         The <strong>Press Job Spec Sheet</strong> is a self-contained web page — no install, no server, no internet
-        connection required. This guide covers filling it out, saving/loading drafts, exporting a job for
-        prepress, and — for whoever maintains the form — how to safely add or remove dropdown options.
+        connection required. This guide covers filling it out, saving/loading drafts as files, exporting a job for
+        prepress, and — for whoever maintains the form — how to safely add or remove button options.
       </div>
 
       <div class="toc">
@@ -613,27 +626,32 @@
         <div class="body">
           <p>The form is split into sections — Job Info, Proof &amp; Sign-Off, Job Callouts, Artwork, Tooling &amp; Die,
           RFID Inlay, Stock &amp; Substrate, Press Specs, Silk Screen, Finishing &amp; Packaging, Overs/Unders/Shipping,
-          and Special Instructions. Use the left sidebar to jump straight to any section — each link shows that
-          section's icon plus a status dot that turns green once you've entered something in it.</p>
+          and Special Instructions.</p>
+          <p><strong>Turning sections on/off</strong> — every section has a button in the left sidebar. A green glowing
+          halo means that section is included; a plain grey button means it's turned off. Turn off whatever doesn't
+          apply to this job (e.g. no RFID, no Silk Screen) — off sections disappear from the form itself and are left
+          out of anything you export, copy, or print.</p>
           <div class="grid2">
             <div>
-              <p><strong>Dropdowns</strong> — click and pick one option. Used wherever the spreadsheet had a fixed
-              list of choices (e.g. Proof Options, Press Finish, Bleeds).</p>
+              <p><strong>Button-group fields</strong> — click a button to select it (e.g. Proof Options, Press Target,
+              Bleeds); click it again to clear it. These replace what used to be dropdown lists.</p>
             </div>
             <div>
-              <p><strong>Yes / No toggles</strong> — click either pill to select it; click it again to clear it.
-              Used for the simple callout fields (PLI on Back, Arrow, Overage OK, etc.).</p>
+              <p><strong>Yes buttons</strong> — click to mark a callout Yes (PLI on Back, Arrow, Overage OK, etc.).
+              Leaving it un-clicked means <strong>No</strong> — there's no separate No button to click.</p>
             </div>
           </div>
-          <p><strong>Conditional fields</strong> — a couple of sections reveal extra fields automatically:</p>
+          <p><strong>Conditional fields</strong> — a few sections reveal extra fields automatically:</p>
           <ul>
+            <li>Setting <strong>Proof Options</strong> to <em>Customer Specific</em> reveals a details field to describe it.</li>
+            <li><strong>RFID Inlay Type</strong> is two steps: pick a chip family (Ultralight, Mifare Classic, Mifare Plus)
+            and a row of that family's specific chip types appears below it.</li>
             <li>Setting <strong>Silk Screen</strong> to <em>Yes</em> reveals Silk Screen Target, Screen Type, and a
             details box for the screen effect.</li>
             <li>Setting <strong>Hole Punch</strong> to <em>Yes</em> reveals a details field for location/size/quantity.</li>
           </ul>
-          <p>The <strong>Form Completion</strong> bar in the top-right fills in as you go — it's just a visual guide,
-          not a hard requirement. Only <strong>Proof Options</strong> is marked required (red asterisk); everything
-          else is optional so you can send a partial spec sheet if that's all the customer has given you so far.</p>
+          <p>Only <strong>Proof Options</strong> is marked required (red asterisk); everything else is optional so you
+          can send a partial spec sheet if that's all the customer has given you so far.</p>
         </div>
       </section>
 
@@ -643,36 +661,33 @@
         <div class="body">
           <div class="step">
             <div class="num">1</div>
-            <div class="txt"><strong>Save Draft</strong> stores everything currently in the form in this browser's
-            local storage — <span class="btn-preview primary">💾 Save Draft</span> in the bottom action bar.</div>
+            <div class="txt"><strong>Save Draft</strong> — <span class="btn-preview primary">💾 Save Draft</span> —
+            opens your computer's normal Save window. Name the file whatever you like and save it to any folder,
+            drive, or network location. It saves as a small <code>.json</code> file that includes every field and
+            which sections are on/off.</div>
           </div>
           <div class="step">
             <div class="num">2</div>
-            <div class="txt"><strong>Load Draft</strong> — <span class="btn-preview">📂 Load Draft</span> — brings
-            that saved data back into the form. Useful if you need to close the tab and pick a job back up later,
-            or step away mid-call with a customer.</div>
-          </div>
-          <div class="callout warn">
-            <div class="ci">⚠️</div>
-            <div><strong>A saved draft lives only in one browser, on one computer.</strong> It is not a file, it is
-            not synced to a server, and it is not shared between machines. If you clear your browser's site data,
-            switch computers, or open the form in a different browser, the draft won't be there. There is only
-            <em>one</em> saved draft slot at a time — saving again overwrites the previous one. For anything you
-            need to keep long-term or hand off to someone else, use <strong>Export Text</strong> (see next section)
-            instead.</div>
+            <div class="txt"><strong>Load Draft</strong> — <span class="btn-preview">📂 Load Draft</span> — opens your
+            computer's normal Open window so you can pick any draft file you (or a teammate) saved earlier, from
+            anywhere.</div>
           </div>
           <div class="callout good">
             <div class="ci">✅</div>
-            <div><strong>New dropdown options never break an old draft.</strong> If the form gets new choices added
-            to an existing dropdown after you saved a draft, loading that draft still works perfectly — your
-            previous selection is still in the list.</div>
+            <div><strong>Drafts are portable files.</strong> Email one to a coworker, drop it on a shared drive, or
+            carry it on a USB stick — opening it on any copy of this form brings that job right back.</div>
           </div>
           <div class="callout warn">
             <div class="ci">⚠️</div>
-            <div><strong>Renamed or removed options can.</strong> If a dropdown option you had selected gets renamed
-            or deleted from the form later, loading an old draft will clear just that one field and show a yellow
-            warning banner at the top of the page telling you exactly which field to re-check. Nothing else in the
-            draft is affected — see <a href="#guide-maintain">section 4</a> for why this happens.</div>
+            <div><strong>The native Save window needs Chrome or Edge.</strong> Those browsers show a true Windows Save
+            As dialog. Other browsers will still save the draft, just via a normal file download instead of a picker
+            (check your browser's download settings if you want it to ask where to save every time).</div>
+          </div>
+          <div class="callout warn">
+            <div class="ci">⚠️</div>
+            <div><strong>Adding button options never breaks an old draft</strong> — a previous selection is still in
+            the list. But if a button option gets renamed or removed later, loading an older draft will clear just
+            that one field and show a yellow warning banner naming it — see <a href="#guide-maintain">section 4</a>.</div>
           </div>
         </div>
       </section>
@@ -681,60 +696,63 @@
       <section class="card" id="guide-export">
         <div class="head"><div class="ic c3">📦</div><div><h2>3. Exporting a Job</h2></div></div>
         <div class="body">
-          <p>Three ways to get a finished spec sheet out of the form and to prepress/the press floor:</p>
+          <p>Three ways to get a finished spec sheet out of the form and to prepress/the press floor. All three skip
+          any section you've turned off, lay section data out in two columns, and put Special Instructions in a
+          single column at the very end:</p>
           <ul>
-            <li><span class="btn-preview">📋 Copy to Clipboard</span> — copies a clean, labeled text summary of
-            every field, grouped by section. Paste it straight into an email, Teams/Slack message, or your job
-            ticketing system.</li>
+            <li><span class="btn-preview">📋 Copy to Clipboard</span> — copies a clean, two-column text summary.
+            Paste it straight into an email, Teams/Slack message, or your job ticketing system.</li>
             <li><span class="btn-preview">⬇️ Export Text</span> — downloads that same summary as a <code>.txt</code>
-            file named after the customer, for attaching to a job folder or email.</li>
-            <li><span class="btn-preview">🖨️ Print / PDF</span> — opens the browser's print dialog with a clean,
-            button-free layout. Choose "Save as PDF" as the printer to get a PDF instead of a paper printout.</li>
+            file named after the customer.</li>
+            <li><span class="btn-preview">🖨️ Print / PDF</span> — opens your computer's Print window with a clean,
+            button-free layout. Choose "Save as PDF" as the printer, and the very next window it opens is the same
+            native Save window described in section 2 — name the PDF and pick a folder.</li>
           </ul>
-          <p>Blank fields show as <code>—</code> in the exported summary so it's obvious at a glance what still
-          needs to be filled in.</p>
+          <p>Blank text fields show as <code>—</code>; blank Yes callouts show as <strong>No</strong>, since that's
+          what leaving them unclicked means.</p>
         </div>
       </section>
 
       <!-- 4. MAINTAIN -->
       <section class="card" id="guide-maintain">
-        <div class="head"><div class="ic c4">🛠️</div><div><h2>4. Adding / Removing Dropdown Options</h2></div></div>
+        <div class="head"><div class="ic c4">🛠️</div><div><h2>4. Adding / Removing Button Options</h2></div></div>
         <div class="body">
-          <p>This section is for whoever maintains the form file, not day-to-day form users. Every dropdown's choices
-          live in <strong>one place</strong>: a block near the top of the <code>&lt;script&gt;</code> called
-          <code>DROPDOWN_OPTIONS</code>, clearly marked with a comment header. You don't need to touch any HTML to
-          change a dropdown's choices.</p>
+          <p>This section is for whoever maintains the form file, not day-to-day form users. Almost every button
+          row's choices live in <strong>one place</strong>: a block near the top of the <code>&lt;script&gt;</code>
+          called <code>DROPDOWN_OPTIONS</code>. RFID Inlay Type has its own two-step structure right below it,
+          called <code>RFID_FAMILIES</code>. You don't need to touch any HTML to change either one.</p>
 
-          <pre class="code-block"><span class="c">// Flat list — shows as a plain dropdown</span>
+          <pre class="code-block"><span class="c">// Every key below becomes a row of buttons</span>
 <span class="k">var</span> DROPDOWN_OPTIONS = {
   proofOptions: [<span class="s">"Standard"</span>, <span class="s">"Blind"</span>, <span class="s">"Customer Specific"</span>],
   <span class="c">// ...</span>
+};
 
-  <span class="c">// Grouped list — shows as labeled sections inside the dropdown</span>
-  rfidInlayType: {
-    <span class="s">"UL Family"</span>:     [<span class="s">"UL 48"</span>, <span class="s">"UL 128"</span>, <span class="s">"UL C"</span>, <span class="s">"UL AES"</span>],
-    <span class="s">"Mifare Family"</span>: [<span class="s">"Mifare Classic 1K"</span>, <span class="s">"Mifare Classic 4K"</span>, <span class="s">"Mifare Plus 1K"</span>]
-  }
+<span class="c">// RFID is a two-step picker: family button, then a row of that family's types</span>
+<span class="k">var</span> RFID_FAMILIES = {
+  <span class="s">"Ultralight"</span>:     [<span class="s">"UL 48"</span>, <span class="s">"UL 128"</span>, <span class="s">"UL C"</span>, <span class="s">"UL AES"</span>],
+  <span class="s">"Mifare Classic"</span>: [<span class="s">"Mifare Classic 1K"</span>, <span class="s">"Mifare Classic 4K"</span>],
+  <span class="s">"Mifare Plus"</span>:    [<span class="s">"Mifare Plus 1K"</span>]
 };</pre>
 
           <div class="step">
             <div class="num">1</div>
-            <div class="txt"><strong>To add a choice</strong> to an existing dropdown: open the file in any text
+            <div class="txt"><strong>To add a choice</strong> to an existing button row: open the file in any text
             editor, find that field's array, and add a new <code>"Choice Name"</code> inside the square brackets,
             separated by a comma. Save the file and reload the page in the browser — that's it.</div>
           </div>
           <div class="step">
             <div class="num">2</div>
-            <div class="txt"><strong>To add a whole new dropdown field</strong>, add a new
+            <div class="txt"><strong>To add a whole new button-group field</strong>, add a new
             <code>key: [...]</code> line to <code>DROPDOWN_OPTIONS</code>, then in the HTML add
-            <code>&lt;select data-field="yourField" data-label="Your Label" data-options="yourKey"&gt;&lt;/select&gt;</code>
-            — the page fills in the options automatically on load.</div>
+            <code>&lt;div class="btn-group" data-field="yourField" data-label="Your Label" data-options="yourKey"&gt;&lt;/div&gt;</code>
+            — the page fills in the buttons automatically on load.</div>
           </div>
           <div class="step">
             <div class="num">3</div>
-            <div class="txt"><strong>To group choices</strong> like the RFID Inlay Type dropdown, use an object of
-            <code>"Group Label": [...]</code> instead of a flat array (see the second example above). Each group
-            becomes its own labeled section in the dropdown.</div>
+            <div class="txt"><strong>To add an RFID chip type</strong>, add it inside the right family's array in
+            <code>RFID_FAMILIES</code>. To add a whole new family, add a new <code>"Family Name": [...]</code> entry
+            — its button appears automatically alongside Ultralight and Mifare Classic.</div>
           </div>
 
           <div class="callout good">
@@ -746,9 +764,8 @@
             <div class="ci">⚠️</div>
             <div><strong>Renaming or deleting an existing option is not silent.</strong> Anyone with a draft that
             used the old text will see that one field cleared and flagged with a warning banner next time they load
-            their draft (see <a href="#guide-drafts">section 2</a>). This is by design — better a visible warning than a
-            job silently shipping with the wrong spec. If you just need to fix a typo in an option's wording,
-            expect a few of these warnings to show up for anyone with an in-progress draft; that's normal.</div>
+            it (see <a href="#guide-drafts">section 2</a>). This is by design — better a visible warning than a job
+            silently shipping with the wrong spec.</div>
           </div>
         </div>
       </section>
@@ -757,20 +774,21 @@
       <section class="card" id="guide-faq">
         <div class="head"><div class="ic c11">💬</div><div><h2>5. Troubleshooting</h2></div></div>
         <div class="body">
-          <p><strong>I loaded a draft and one of my dropdown answers disappeared.</strong><br>
+          <p><strong>I loaded a draft and one of my button selections disappeared.</strong><br>
           That option was renamed or removed from the form since you saved. Look for the yellow warning banner at
           the top of the page — it names the exact field so you can re-select the closest current option.</p>
-          <p><strong>Load Draft says "No saved draft found."</strong><br>
-          Either you haven't clicked Save Draft yet on this computer/browser, or your browser's site data was
-          cleared since the last save. Drafts don't transfer between computers or browsers — see
-          <a href="#guide-drafts">section 2</a>.</p>
+          <p><strong>Load Draft didn't do anything, or shows an error.</strong><br>
+          Make sure you're picking the <code>.json</code> draft file you saved earlier, not some other file. A
+          confirmation toast appears in the top-right once it loads successfully.</p>
+          <p><strong>Save Draft just downloaded a file instead of asking where to save.</strong><br>
+          That means the browser you're using doesn't support the native Save window (see section 2) — try Chrome or
+          Edge for the full experience, or check your browser's download settings.</p>
           <p><strong>Copy to Clipboard didn't seem to do anything.</strong><br>
           Some browsers block clipboard access until you interact with the page first — click anywhere on the form
           once, then try the button again. A confirmation toast appears in the top-right when it works.</p>
           <p><strong>Can multiple people use this at once?</strong><br>
-          Yes — each person opens their own copy of the HTML file in their own browser. There's no shared server or
-          database, so two people's drafts never collide, but they also can't see each other's in-progress work.
-          Use Export/Copy to hand a finished sheet to someone else.</p>
+          Yes — each person opens their own copy of the HTML file. There's no shared server or database, so hand off
+          a job by sending someone the draft file (see section 2) or a finished Export/Copy summary.</p>
         </div>
       </section>
 
@@ -780,23 +798,17 @@
 
 <script>
 /* ============================================================
-   DROPDOWN OPTIONS — EDIT THIS BLOCK TO ADD/REMOVE CHOICES
+   BUTTON OPTIONS — EDIT THIS BLOCK TO ADD/REMOVE CHOICES
    ------------------------------------------------------------
-   Each key below feeds one or more <select> fields on the page
+   Each key below feeds one button-group field on the page
    (matched by that field's data-options="..." attribute).
    To add a new choice, add a new line inside the array, e.g.:
        proofOptions: ["Standard", "Blind", "Customer Specific", "New Choice Here"],
-   To add a brand-new dropdown field:
+   To add a brand-new button-group field:
      1. Add a new key + array here.
-     2. In the HTML, add <select data-field="yourField"
-        data-label="Your Label" data-options="yourKey"></select>
-   Order in the array is the order shown in the dropdown.
-
-   Some fields (like rfidInlayType below) are GROUPED instead of a flat
-   array — use a plain object of { "Group Label": ["choice", "choice"] }
-   and each group renders as its own labeled section in the dropdown.
-   Add a new chip type by adding a line inside the matching group's
-   array, or a new group by adding a new "Group Label": [...] entry.
+     2. In the HTML, add <div class="btn-group" data-field="yourField"
+        data-label="Your Label" data-options="yourKey"></div>
+   Order in the array is the order the buttons appear in.
    ============================================================ */
 var DROPDOWN_OPTIONS = {
   proofOptions:      ["Standard", "Blind", "Customer Specific"],
@@ -805,117 +817,183 @@ var DROPDOWN_OPTIONS = {
   pressFinish:       ["Gloss", "Satin", "Matte", "UV", "Raw"],
   bleeds:            ["Front", "Back", "Both", "None"],
   silkScreenTarget:  ["Archive", "New"],
-  screenType:        ["Flood", "Spot"],
-  rfidInlayType: {
-    "UL Family":     ["UL 48", "UL 128", "UL C", "UL AES"],
-    "Mifare Family": ["Mifare Classic 1K", "Mifare Classic 4K", "Mifare Plus 1K"]
-  }
+  screenType:        ["Flood", "Spot"]
+};
+
+/* RFID Inlay Type is a two-step picker: pick a family button, then a row of
+   that family's specific chip types appears. Add a chip type inside the
+   right family's array, or add a whole new "Family Name": [...] entry. */
+var RFID_FAMILIES = {
+  "Ultralight":     ["UL 48", "UL 128", "UL C", "UL AES"],
+  "Mifare Classic": ["Mifare Classic 1K", "Mifare Classic 4K"],
+  "Mifare Plus":    ["Mifare Plus 1K"]
 };
 /* ============================================================ */
 
 (function(){
-  var STORAGE_KEY = 'pressJobSpecSheet.v1';
 
-  // Build every <select data-options="..."> from DROPDOWN_OPTIONS above.
-  // Supports a flat array (["a","b"]) or a grouped object
-  // ({ "Group Label": ["a","b"] }) which renders as <optgroup> blocks.
-  function optionHtml(choice){
-    return '<option value="' + choice.replace(/"/g,'&quot;') + '">' + choice + '</option>';
+  // ---- Generic getters/setters used by every custom control below ----
+  function getValue(el){ return el.value || ''; }
+  function setValue(el, val){
+    if (el._setVal) { el._setVal(val || ''); return; }
+    el.value = val || '';
   }
-  document.querySelectorAll('select[data-options]').forEach(function(sel){
-    var key = sel.getAttribute('data-options');
-    var choices = DROPDOWN_OPTIONS[key] || [];
-    var html = '<option value="">Select…</option>';
-    if (Array.isArray(choices)) {
-      choices.forEach(function(choice){ html += optionHtml(choice); });
-    } else {
-      Object.keys(choices).forEach(function(group){
-        html += '<optgroup label="' + group.replace(/"/g,'&quot;') + '">';
-        choices[group].forEach(function(choice){ html += optionHtml(choice); });
-        html += '</optgroup>';
+  function allFieldEls(){
+    return document.querySelectorAll('input[data-field], textarea[data-field], .yn[data-field], .btn-group[data-field]');
+  }
+
+  // ---- Button-group fields (replace what used to be dropdowns) ----
+  function populateBtnGroup(el, choices){
+    el.innerHTML = '';
+    el.value = '';
+    choices.forEach(function(choice){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt';
+      b.textContent = choice;
+      b.addEventListener('click', function(){ setVal(el.value === choice ? '' : choice); });
+      el.appendChild(b);
+    });
+    function setVal(v){
+      // Only accept a value that matches one of this group's actual buttons —
+      // otherwise a stale/renamed option would silently stick around as the
+      // field's value with no button shown as selected, masking the mismatch
+      // warning and corrupting the next save. Anything unmatched clears to ''.
+      var matched = v && choices.indexOf(v) !== -1;
+      el.value = matched ? v : '';
+      Array.prototype.forEach.call(el.children, function(btn){
+        btn.classList.toggle('active', matched && btn.textContent === v);
       });
+      el.setAttribute('data-print-val', el.value || '—');
+      onFieldChange(el.getAttribute('data-field'));
     }
-    sel.innerHTML = html;
+    el._setVal = setVal;
+  }
+  document.querySelectorAll('.btn-group[data-options]').forEach(function(el){
+    var key = el.getAttribute('data-options');
+    populateBtnGroup(el, DROPDOWN_OPTIONS[key] || []);
   });
 
-  var yn = document.querySelectorAll('.yn');
-  yn.forEach(function(group){
+  // ---- Single "Yes" toggle fields (blank/off = No) ----
+  document.querySelectorAll('.yn').forEach(function(group){
     var yesBtn = group.querySelector('.yes');
-    var noBtn = group.querySelector('.no');
     group.value = '';
     function setVal(v){
-      group.value = v;
-      yesBtn.classList.toggle('active', v === 'Yes');
-      noBtn.classList.toggle('active', v === 'No');
-      group.setAttribute('data-print-val', v || '—');
+      group.value = (v === 'Yes') ? 'Yes' : '';
+      yesBtn.classList.toggle('active', group.value === 'Yes');
+      group.setAttribute('data-print-val', group.value || 'No');
       onFieldChange(group.getAttribute('data-field'));
     }
     yesBtn.addEventListener('click', function(){ setVal(group.value === 'Yes' ? '' : 'Yes'); });
-    noBtn.addEventListener('click', function(){ setVal(group.value === 'No' ? '' : 'No'); });
     group._setVal = setVal;
   });
 
+  // ---- RFID Inlay Type: family button, then that family's type buttons ----
+  var rfidFamilyGroup = document.getElementById('rfidFamilyGroup');
+  var rfidTypeGroup = document.getElementById('rfidTypeGroup');
+  var rfidTypePanel = document.getElementById('rfidTypePanel');
+  rfidTypeGroup.value = '';
+
+  function findRfidFamily(typeVal){
+    for (var fam in RFID_FAMILIES) {
+      if (RFID_FAMILIES[fam].indexOf(typeVal) !== -1) return fam;
+    }
+    return null;
+  }
+  function renderRfidFamilyButtons(activeFamily){
+    rfidFamilyGroup.innerHTML = '';
+    Object.keys(RFID_FAMILIES).forEach(function(fam){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt' + (fam === activeFamily ? ' active' : '');
+      b.textContent = fam;
+      b.addEventListener('click', function(){
+        selectRfidFamily(activeFamily === fam ? null : fam);
+      });
+      rfidFamilyGroup.appendChild(b);
+    });
+  }
+  function renderRfidTypeButtons(family, activeType){
+    rfidTypeGroup.innerHTML = '';
+    if (!family) return;
+    RFID_FAMILIES[family].forEach(function(type){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt' + (type === activeType ? ' active' : '');
+      b.textContent = type;
+      b.addEventListener('click', function(){
+        var newVal = (rfidTypeGroup.value === type) ? '' : type;
+        rfidTypeGroup.value = newVal;
+        rfidTypeGroup.setAttribute('data-print-val', newVal || '—');
+        renderRfidTypeButtons(family, newVal);
+        onFieldChange('rfidInlayType');
+      });
+      rfidTypeGroup.appendChild(b);
+    });
+  }
+  function selectRfidFamily(family){
+    renderRfidFamilyButtons(family);
+    rfidTypePanel.classList.toggle('open', !!family);
+    renderRfidTypeButtons(family, null);
+    rfidTypeGroup.value = '';
+    rfidTypeGroup.setAttribute('data-print-val', '—');
+    onFieldChange('rfidInlayType');
+  }
+  rfidTypeGroup._setVal = function(val){
+    var fam = findRfidFamily(val);
+    renderRfidFamilyButtons(fam);
+    rfidTypePanel.classList.toggle('open', !!fam);
+    renderRfidTypeButtons(fam, val);
+    rfidTypeGroup.value = fam ? val : '';
+    rfidTypeGroup.setAttribute('data-print-val', (fam ? val : '') || '—');
+  };
+  selectRfidFamily(null);
+
+  // ---- Conditional reveals ----
   var silkYN = document.querySelector('.yn[data-field="silkScreen"]');
   var silkPanel = document.getElementById('silkPanel');
   var holeYN = document.querySelector('.yn[data-field="holePunch"]');
   var holeField = document.getElementById('holePunchDetailsField');
+  var proofOptionsGroup = document.querySelector('.btn-group[data-field="proofOptions"]');
+  var proofCustomField = document.getElementById('proofCustomField');
 
   function onFieldChange(field){
     if (field === 'silkScreen') silkPanel.classList.toggle('open', silkYN.value === 'Yes');
     if (field === 'holePunch') holeField.style.display = (holeYN.value === 'Yes') ? 'flex' : 'none';
-    updateProgress();
+    if (field === 'proofOptions') proofCustomField.style.display = (proofOptionsGroup.value === 'Customer Specific') ? 'flex' : 'none';
   }
 
-  var inputs = document.querySelectorAll('[data-field]');
-  inputs.forEach(function(el){
-    if (el.classList.contains('yn')) return;
-    el.addEventListener('input', function(){ el.classList.remove('invalid'); updateProgress(); });
-    el.addEventListener('change', updateProgress);
+  // ---- Section on/off toggles ----
+  document.querySelectorAll('.sec-toggle').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var active = !btn.classList.contains('active');
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      document.getElementById(btn.getAttribute('data-target')).hidden = !active;
+    });
   });
-
-  function allFieldEls(){
-    return document.querySelectorAll('input[data-field], select[data-field], textarea[data-field], .yn[data-field]');
+  function collectSectionStates(){
+    var states = {};
+    document.querySelectorAll('.sec-toggle').forEach(function(btn){
+      states[btn.getAttribute('data-target')] = btn.classList.contains('active');
+    });
+    return states;
   }
-
-  function getValue(el){
-    if (el.classList.contains('yn')) return el.value || '';
-    return el.value || '';
+  function applySectionStates(states){
+    document.querySelectorAll('.sec-toggle').forEach(function(btn){
+      var id = btn.getAttribute('data-target');
+      if (!states.hasOwnProperty(id)) return;
+      var active = !!states[id];
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      document.getElementById(id).hidden = !active;
+    });
   }
-  function setValue(el, val){
-    if (el.classList.contains('yn')) { el._setVal(val || ''); return; }
-    el.value = val || '';
-  }
-
-  function updateProgress(){
-    var els = Array.prototype.slice.call(allFieldEls());
-    var filled = 0;
-    els.forEach(function(el){ if (getValue(el).trim() !== '') filled++; });
-    var pct = Math.round((filled / els.length) * 100);
-    document.getElementById('progressFill').style.width = pct + '%';
-    document.getElementById('progressNum').textContent = pct + '%';
-
-    var sectionMap = {
-      'sec-job':['customerName','jobNumber','salesRep'],
-      'sec-proof':['proofOptions','proofAttention','signOffDate'],
-      'sec-callouts':['pliOnBack','arrow','pcNumber'],
-      'sec-art':['frontArt','backArt'],
-      'sec-tooling':['lockSystem','lockSystemTech','dieNumber','size','thickness'],
-      'sec-rfid':['rfidInlayType','vingEncoding'],
-      'sec-stock':['stock','stockColor'],
-      'sec-press':['pressTarget','pressFrontFinish','pressBackFinish','frontColor','backColor','bleeds'],
-      'sec-silk':['silkScreen'],
-      'sec-finish':['holePunch','shrinkWrapPacks','sleeve','sleeveLabels'],
-      'sec-ship':['overageOK','shipEarly','undersOK'],
-      'sec-notes':['instructions']
-    };
-    Object.keys(sectionMap).forEach(function(secId){
-      var fields = sectionMap[secId];
-      var any = fields.some(function(f){
-        var el = document.querySelector('[data-field="'+f+'"]');
-        return el && getValue(el).trim() !== '';
-      });
-      var link = document.querySelector('nav.jump a[href="#'+secId+'"]');
-      if (link) link.classList.toggle('done', any);
+  function resetSectionStates(){
+    document.querySelectorAll('.sec-toggle').forEach(function(btn){
+      btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
+      document.getElementById(btn.getAttribute('data-target')).hidden = false;
     });
   }
 
@@ -928,7 +1006,7 @@ var DROPDOWN_OPTIONS = {
   }
 
   // Loads saved data into the form. Returns a list of {label, saved} for any
-  // SELECT field whose saved value no longer matches a current <option> —
+  // button-group field whose saved value no longer matches a current option —
   // this happens when an option was renamed or removed after the draft was
   // saved (adding new options never causes this; old values still match).
   function applyData(data){
@@ -938,13 +1016,13 @@ var DROPDOWN_OPTIONS = {
       if (!data.hasOwnProperty(f)) return;
       var savedVal = data[f];
       setValue(el, savedVal);
-      if (el.tagName === 'SELECT' && savedVal && getValue(el) !== savedVal) {
+      if (el.classList.contains('btn-group') && savedVal && getValue(el) !== savedVal) {
         mismatches.push({ label: el.getAttribute('data-label'), saved: savedVal });
       }
     });
     onFieldChange('silkScreen');
     onFieldChange('holePunch');
-    updateProgress();
+    onFieldChange('proofOptions');
     return mismatches;
   }
 
@@ -958,7 +1036,6 @@ var DROPDOWN_OPTIONS = {
     });
     document.getElementById('draftWarning').hidden = false;
   }
-
   function hideDraftWarning(){
     document.getElementById('draftWarning').hidden = true;
   }
@@ -971,69 +1048,138 @@ var DROPDOWN_OPTIONS = {
     setTimeout(function(){ t.classList.remove('show'); }, 2200);
   }
 
-  document.getElementById('btnSave').addEventListener('click', function(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(collectData()));
-    var msg = document.getElementById('saveMsg');
-    msg.textContent = 'Saved ' + new Date().toLocaleTimeString();
-    toast('Draft saved to this browser');
-  });
+  function currentFileBaseName(){
+    var custEl = document.querySelector('[data-field="customerName"]');
+    return (custEl && custEl.value.trim()) ? custEl.value.trim().replace(/[^a-z0-9]+/gi,'_') : 'job';
+  }
 
-  document.getElementById('btnLoad').addEventListener('click', function(){
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw){ toast('No saved draft found'); return; }
-    try{
-      var mismatches = applyData(JSON.parse(raw));
-      if (mismatches.length) {
-        showDraftWarning(mismatches);
-        toast('Draft loaded — ' + mismatches.length + ' field(s) need review');
-      } else {
-        hideDraftWarning();
-        toast('Draft loaded');
+  // ---- Save Draft: native Save As window (Chrome/Edge) with download fallback ----
+  async function saveDraftToFile(){
+    var json = JSON.stringify({ fields: collectData(), sections: collectSectionStates() }, null, 2);
+    var suggestedName = 'job_spec_draft_' + currentFileBaseName() + '.json';
+
+    if (window.showSaveFilePicker) {
+      try {
+        var handle = await window.showSaveFilePicker({
+          suggestedName: suggestedName,
+          types: [{ description: 'Job Spec Draft', accept: { 'application/json': ['.json'] } }]
+        });
+        var writable = await handle.createWritable();
+        await writable.write(json);
+        await writable.close();
+        document.getElementById('saveMsg').textContent = 'Saved ' + new Date().toLocaleTimeString();
+        toast('Draft saved');
+        return;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
       }
     }
-    catch(e){ toast('Could not read saved draft'); }
+    var blob = new Blob([json], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = suggestedName;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    document.getElementById('saveMsg').textContent = 'Downloaded ' + new Date().toLocaleTimeString();
+    toast('Draft downloaded (' + suggestedName + ')');
+  }
+  document.getElementById('btnSave').addEventListener('click', saveDraftToFile);
+
+  // ---- Load Draft: native Open window via file input ----
+  document.getElementById('btnLoad').addEventListener('click', function(){
+    document.getElementById('draftFileInput').click();
+  });
+  document.getElementById('draftFileInput').addEventListener('change', function(e){
+    var file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try {
+        var parsed = JSON.parse(reader.result);
+        var fieldData = parsed.fields || parsed;
+        var mismatches = applyData(fieldData);
+        if (parsed.sections) applySectionStates(parsed.sections);
+        if (mismatches.length) {
+          showDraftWarning(mismatches);
+          toast('Draft loaded — ' + mismatches.length + ' field(s) need review');
+        } else {
+          hideDraftWarning();
+          toast('Draft loaded');
+        }
+      } catch (err) {
+        toast('Could not read that file — is it a valid draft?');
+      }
+    };
+    reader.readAsText(file);
   });
 
   document.getElementById('btnClear').addEventListener('click', function(){
-    if (!confirm('Clear all fields on this form? This cannot be undone.')) return;
+    if (!confirm('Clear all fields and section selections on this form? This cannot be undone.')) return;
     hideDraftWarning();
     allFieldEls().forEach(function(el){ setValue(el, ''); });
     onFieldChange('silkScreen');
     onFieldChange('holePunch');
-    updateProgress();
+    onFieldChange('proofOptions');
+    resetSectionStates();
     toast('Form cleared');
   });
 
   document.getElementById('btnPrint').addEventListener('click', function(){ window.print(); });
+
+  function padCol(text, width){
+    return text.length >= width ? text + '  ' : text + ' '.repeat(width - text.length);
+  }
+  function twoColumnLines(pairs){
+    var COL_WIDTH = 44;
+    var lines = [];
+    for (var i = 0; i < pairs.length; i += 2) {
+      var left = pairs[i];
+      var leftText = left.label + ': ' + (left.value || (left.isYN ? 'No' : '—'));
+      var right = pairs[i + 1];
+      if (right) {
+        var rightText = right.label + ': ' + (right.value || (right.isYN ? 'No' : '—'));
+        lines.push(padCol(leftText, COL_WIDTH) + rightText);
+      } else {
+        lines.push(leftText);
+      }
+    }
+    return lines;
+  }
 
   function buildSummaryText(){
     var lines = [];
     lines.push('PRESS JOB SPEC SHEET');
     lines.push('Generated: ' + new Date().toLocaleString());
     lines.push('');
-    var order = ['sec-job','sec-proof','sec-callouts','sec-art','sec-tooling','sec-rfid','sec-stock','sec-press','sec-silk','sec-finish','sec-ship','sec-notes'];
+    var order = ['sec-job','sec-proof','sec-callouts','sec-art','sec-tooling','sec-rfid','sec-stock','sec-press','sec-silk','sec-finish','sec-ship'];
     order.forEach(function(secId){
       var card = document.getElementById(secId);
+      if (card.hidden) return;
+      var fields = card.querySelectorAll('[data-field]');
+      if (!fields.length) return;
       var title = card.querySelector('h2').textContent;
       lines.push('== ' + title.toUpperCase() + ' ==');
-      var fields = card.querySelectorAll('[data-field]');
-      fields.forEach(function(el){
-        var label = el.getAttribute('data-label');
-        var val = getValue(el).trim();
-        lines.push(label + ': ' + (val || '—'));
+      var pairs = Array.prototype.map.call(fields, function(el){
+        return { label: el.getAttribute('data-label'), value: getValue(el).trim(), isYN: el.classList.contains('yn') };
       });
+      lines = lines.concat(twoColumnLines(pairs));
       lines.push('');
     });
+
+    var notesCard = document.getElementById('sec-notes');
+    if (!notesCard.hidden) {
+      lines.push('== SPECIAL INSTRUCTIONS ==');
+      var notesEl = notesCard.querySelector('[data-field]');
+      lines.push('Instructions: ' + (getValue(notesEl).trim() || '—'));
+    }
     return lines.join('\n');
   }
 
   document.getElementById('btnExport').addEventListener('click', function(){
     var blob = new Blob([buildSummaryText()], {type:'text/plain'});
     var a = document.createElement('a');
-    var custEl = document.querySelector('[data-field="customerName"]');
-    var custName = (custEl && custEl.value.trim()) ? custEl.value.trim().replace(/[^a-z0-9]+/gi,'_') : 'job';
     a.href = URL.createObjectURL(blob);
-    a.download = 'job_spec_' + custName + '.txt';
+    a.download = 'job_spec_' + currentFileBaseName() + '.txt';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     toast('Exported as text file');
   });
@@ -1061,10 +1207,11 @@ var DROPDOWN_OPTIONS = {
     }
   });
 
-  updateProgress();
-
   window.addEventListener('beforeprint', function(){
     document.querySelectorAll('.yn').forEach(function(g){
+      g.setAttribute('data-print-val', g.value || 'No');
+    });
+    document.querySelectorAll('.btn-group[data-field]').forEach(function(g){
       g.setAttribute('data-print-val', g.value || '—');
     });
   });
