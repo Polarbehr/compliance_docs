@@ -501,8 +501,8 @@
               <div class="btn-group" data-field="magEncodingType" data-label="Magnetic Encoding Type" data-options="magEncodingType"></div>
             </div>
             <div class="field">
-              <label>Tracks Encoded</label>
-              <div class="btn-group" data-field="magTracks" data-label="Tracks Encoded" data-options="magTracks"></div>
+              <label>Tracks Encoded <span class="hint">(select all that apply)</span></label>
+              <div class="btn-group" data-field="magTracks" data-label="Tracks Encoded" data-options="magTracks" data-multi="true"></div>
             </div>
             <div class="field span-2">
               <label>Encoding Details</label>
@@ -864,7 +864,7 @@ var DROPDOWN_OPTIONS = {
   silkScreenTarget:  ["Archive", "New"],
   screenType:        ["Flood", "Spot"],
   magEncodingType:   ["Hi-Co", "Mid-Co", "Lo-Co"],
-  magTracks:         ["Track 1", "Track 2", "Track 3", "All Tracks"]
+  magTracks:         ["Track 1", "Track 2", "Track 3"]
 };
 
 /* RFID Inlay Type is a two-step picker: pick a family button, then a row of
@@ -944,9 +944,53 @@ var RFID_FAMILIES = {
     }
     el._setVal = setVal;
   }
+
+  // Multi-select variant (e.g. Tracks Encoded) — any number of buttons can be
+  // active at once. Value is a comma-separated string in the same order the
+  // buttons are shown, regardless of click order, so it stays consistent
+  // between exports and reloaded drafts.
+  function populateMultiBtnGroup(el, choices){
+    el.innerHTML = '';
+    el.value = '';
+    var selected = [];
+    function currentValue(){
+      return choices.filter(function(c){ return selected.indexOf(c) !== -1; }).join(', ');
+    }
+    function refresh(){
+      Array.prototype.forEach.call(el.children, function(btn){
+        btn.classList.toggle('active', selected.indexOf(btn.textContent) !== -1);
+      });
+      el.value = currentValue();
+      el.setAttribute('data-print-val', el.value || '—');
+    }
+    choices.forEach(function(choice){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt';
+      b.textContent = choice;
+      b.addEventListener('click', function(){
+        var idx = selected.indexOf(choice);
+        if (idx === -1) selected.push(choice); else selected.splice(idx, 1);
+        refresh();
+        onFieldChange(el.getAttribute('data-field'));
+      });
+      el.appendChild(b);
+    });
+    el._setVal = function(v){
+      var vals = (v || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+      // Drop anything that isn't a current choice — same stale-value handling
+      // as the single-select groups, and it still trips the mismatch warning
+      // below since the rebuilt value won't match what was saved.
+      selected = vals.filter(function(v2){ return choices.indexOf(v2) !== -1; });
+      refresh();
+    };
+  }
+
   document.querySelectorAll('.btn-group[data-options]').forEach(function(el){
     var key = el.getAttribute('data-options');
-    populateBtnGroup(el, DROPDOWN_OPTIONS[key] || []);
+    var choices = DROPDOWN_OPTIONS[key] || [];
+    if (el.hasAttribute('data-multi')) populateMultiBtnGroup(el, choices);
+    else populateBtnGroup(el, choices);
   });
 
   // ---- Single "Yes" toggle fields (blank/off = No) ----
