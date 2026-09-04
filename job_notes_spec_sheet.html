@@ -170,6 +170,14 @@
   .rfid-left-col{display:flex;flex-direction:column;gap:10px;flex:1;min-width:260px;}
   .rfid-left-col > label{margin:0;}
   .inline-yn-stack{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none;}
+  .label-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:2px;}
+  .label-row > label{margin:0;}
+  .load-btn{
+    padding:7px 14px; border-radius:9px; border:1.5px solid var(--cyan);
+    background:rgba(0,174,239,.08); color:#036b96; font-weight:800; font-size:12.5px;
+    cursor:pointer; font-family:inherit; white-space:nowrap; transition:background .15s;
+  }
+  .load-btn:hover{background:rgba(0,174,239,.16);}
   .inline-yn{display:flex;align-items:center;gap:10px;}
   .inline-yn label{font-size:12.5px;font-weight:700;color:#3a3530;margin:0;white-space:nowrap;}
   .field input[type="text"],
@@ -494,10 +502,17 @@
 
       <!-- TOOLING -->
       <section class="card" id="sec-tooling">
-        <div class="head"><div class="ic c5">🔩</div><div><h2>Tooling &amp; Die</h2><p>Mechanical specs for the die.</p></div></div>
+        <div class="head"><div class="ic c5">🔩</div><div><h2>Tooling &amp; Die</h2><p>Pick the die loaded from the Pocket Folders dieline folder.</p></div></div>
         <div class="body">
           <div class="grid">
-            <div class="field"><label>Die #</label><input type="text" data-field="dieNumber" data-label="Die #"></div>
+            <div class="field span-2">
+              <div class="label-row">
+                <label>Die #</label>
+                <button type="button" class="load-btn" id="btnLoadDielines">🗂️ Load Dielines</button>
+              </div>
+              <div class="btn-group" id="dieNumberGroup" data-field="dieNumber" data-label="Die #"></div>
+              <span class="hint" id="dieFolderStatus">No folder loaded yet — click "Load Dielines" and pick the Pocket Folders dieline folder.</span>
+            </div>
           </div>
         </div>
       </section>
@@ -1187,6 +1202,79 @@ var RFID_FAMILIES = {
     renderRfidFamilyRows(fam, val);
   };
   selectRfidFamily(null);
+
+  // ---- Die #: load dieline filenames from a folder the user picks, one
+  // button per file (extension stripped). dieNumberGroup is a single
+  // persistent element like rfidTypeGroup above, so it's always in the
+  // document for allFieldEls()/collectData()/applyData() to find, even
+  // before any folder has been picked this session.
+  var dieNumberGroup = document.getElementById('dieNumberGroup');
+  var dieFolderStatus = document.getElementById('dieFolderStatus');
+  dieNumberGroup.value = '';
+  var dieFiles = null; // null = no folder picked yet this session
+
+  function renderDieButtons(){
+    dieNumberGroup.innerHTML = '';
+    if (!dieFiles) return;
+    dieFiles.forEach(function(name){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt' + (dieNumberGroup.value === name ? ' active' : '');
+      b.textContent = name;
+      b.addEventListener('click', function(){
+        var newVal = (dieNumberGroup.value === name) ? '' : name;
+        dieNumberGroup.value = newVal;
+        dieNumberGroup.setAttribute('data-print-val', newVal || '—');
+        renderDieButtons();
+        onFieldChange('dieNumber');
+      });
+      dieNumberGroup.appendChild(b);
+    });
+  }
+
+  // Loading a draft before the folder has been picked this session just
+  // echoes the saved die name back at face value (no buttons to check it
+  // against yet) rather than flagging it as stale. Once the folder is
+  // actually loaded, that value gets checked for real — see loadDieFolder.
+  dieNumberGroup._setVal = function(val){
+    val = val || '';
+    if (dieFiles && val && dieFiles.indexOf(val) === -1) val = '';
+    dieNumberGroup.value = val;
+    dieNumberGroup.setAttribute('data-print-val', val || '—');
+    renderDieButtons();
+  };
+
+  async function loadDieFolder(){
+    if (!window.showDirectoryPicker) {
+      toast("This browser can't open folders directly — try Chrome or Edge.");
+      return;
+    }
+    try {
+      var dirHandle = await window.showDirectoryPicker();
+      var names = [];
+      for await (var entry of dirHandle.values()) {
+        if (entry.kind === 'file') names.push(entry.name.replace(/\.[^.]+$/, ''));
+      }
+      names.sort(function(a, b){ return a.localeCompare(b, undefined, {numeric:true}); });
+      dieFiles = names;
+      dieFolderStatus.textContent = 'Loaded ' + dieFiles.length + ' dielines from "' + dirHandle.name + '".';
+
+      var current = dieNumberGroup.value;
+      if (current && dieFiles.indexOf(current) === -1) {
+        dieNumberGroup.value = '';
+        dieNumberGroup.setAttribute('data-print-val', '—');
+        toast('Die "' + current + '" was not found in this folder — please re-select.');
+      } else {
+        toast('Loaded ' + dieFiles.length + ' dielines');
+      }
+      renderDieButtons();
+      updateSectionDots();
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      toast('Could not read that folder.');
+    }
+  }
+  document.getElementById('btnLoadDielines').addEventListener('click', loadDieFolder);
 
   // ---- Conditional reveals ----
   var holeYN = document.querySelector('.yn[data-field="holePunch"]');
