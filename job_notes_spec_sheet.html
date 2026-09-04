@@ -90,12 +90,14 @@
   .nav-col-label{font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);margin:0 0 6px;padding:0 6px;}
 
   .sec-static, .sec-toggle{
-    display:block; width:100%; text-align:left;
+    display:flex; align-items:center; gap:7px; width:100%; text-align:left;
     background:none; border:1.5px solid transparent; color:var(--ink);
     font-size:12.5px; font-weight:600; font-family:inherit; cursor:pointer; line-height:1.35;
     padding:8px 8px; border-radius:8px; margin-bottom:4px; transition:all .15s;
   }
   .sec-static:hover, .sec-toggle:hover{background:#f4f1ea;}
+  .sec-static .dot, .sec-toggle .dot{width:7px;height:7px;border-radius:50%;background:var(--line);flex:none;}
+  .sec-static .dot.done, .sec-toggle .dot.done{background:var(--good);}
   .sec-toggle.active{
     background:rgba(18,183,106,.08);
     border-color:var(--good);
@@ -130,6 +132,10 @@
   @media (max-width:640px){.field.span-2{grid-column:span 1;}}
   .field label{font-size:12.5px;font-weight:700;color:#3a3530;display:flex;justify-content:space-between;}
   .field label .req{color:var(--magenta);font-weight:800;}
+  .field-row-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .field-row-header > label{margin:0;}
+  .inline-yn{display:flex;align-items:center;gap:10px;}
+  .inline-yn label{font-size:12.5px;font-weight:700;color:#3a3530;margin:0;white-space:nowrap;}
   .field input[type="text"],
   .field input[type="date"],
   .field textarea{
@@ -350,22 +356,22 @@
       <div class="nav-cols">
         <div class="nav-col">
           <div class="nav-col-label">Required</div>
-          <button type="button" class="sec-static" data-target="sec-job">Job Info</button>
-          <button type="button" class="sec-static" data-target="sec-proof">Proof &amp; Sign-Off</button>
-          <button type="button" class="sec-static" data-target="sec-callouts">Job Callouts</button>
-          <button type="button" class="sec-static" data-target="sec-art">Artwork</button>
-          <button type="button" class="sec-static" data-target="sec-tooling">Tooling &amp; Die</button>
-          <button type="button" class="sec-static" data-target="sec-stock">Stock &amp; Substrate</button>
-          <button type="button" class="sec-static" data-target="sec-press">Press Specs</button>
-          <button type="button" class="sec-static" data-target="sec-finish">Finishing &amp; Packaging</button>
-          <button type="button" class="sec-static" data-target="sec-ship">Overs / Unders / Ship</button>
-          <button type="button" class="sec-static" data-target="sec-notes">Special Instructions</button>
+          <button type="button" class="sec-static" data-target="sec-job"><span class="dot"></span>Job Info</button>
+          <button type="button" class="sec-static" data-target="sec-proof"><span class="dot"></span>Proof &amp; Sign-Off</button>
+          <button type="button" class="sec-static" data-target="sec-callouts"><span class="dot"></span>Job Callouts</button>
+          <button type="button" class="sec-static" data-target="sec-art"><span class="dot"></span>Artwork</button>
+          <button type="button" class="sec-static" data-target="sec-tooling"><span class="dot"></span>Tooling &amp; Die</button>
+          <button type="button" class="sec-static" data-target="sec-stock"><span class="dot"></span>Stock &amp; Substrate</button>
+          <button type="button" class="sec-static" data-target="sec-press"><span class="dot"></span>Press Specs</button>
+          <button type="button" class="sec-static" data-target="sec-finish"><span class="dot"></span>Finishing &amp; Packaging</button>
+          <button type="button" class="sec-static" data-target="sec-ship"><span class="dot"></span>Overs / Unders / Ship</button>
+          <button type="button" class="sec-static" data-target="sec-notes"><span class="dot"></span>Special Instructions</button>
         </div>
         <div class="nav-col">
           <div class="nav-col-label">Optional</div>
-          <button type="button" class="sec-toggle active" data-target="sec-rfid" aria-pressed="true">RFID Inlay</button>
-          <button type="button" class="sec-toggle active" data-target="sec-silk" aria-pressed="true">Silk Screen</button>
-          <button type="button" class="sec-toggle active" data-target="sec-magenc" aria-pressed="true">Magnetic Encoding</button>
+          <button type="button" class="sec-toggle active" data-target="sec-rfid" aria-pressed="true"><span class="dot"></span>RFID Inlay</button>
+          <button type="button" class="sec-toggle active" data-target="sec-silk" aria-pressed="true"><span class="dot"></span>Silk Screen</button>
+          <button type="button" class="sec-toggle active" data-target="sec-magenc" aria-pressed="true"><span class="dot"></span>Magnetic Encoding</button>
         </div>
       </div>
       <span class="hint">Optional sections glow green when included; click to leave one off. Off sections are hidden from the form, export, and print.</span>
@@ -469,13 +475,18 @@
         <div class="body">
           <div class="grid">
             <div class="field span-2">
-              <label>RFID Inlay Type</label>
+              <div class="field-row-header">
+                <label>RFID Inlay Type</label>
+                <div class="inline-yn">
+                  <label>Ving Encoding</label>
+                  <div class="yn" data-field="vingEncoding" data-label="Ving Encoding"><button type="button" class="yes">Yes</button></div>
+                </div>
+              </div>
               <div class="btn-group" id="rfidFamilyGroup"></div>
               <div class="subpanel" id="rfidTypePanel">
                 <div class="btn-group" id="rfidTypeGroup" data-field="rfidInlayType" data-label="RFID Inlay Type"></div>
               </div>
             </div>
-            <div class="field"><label>Ving Encoding</label><div class="yn" data-field="vingEncoding" data-label="Ving Encoding"><button type="button" class="yes">Yes</button></div></div>
           </div>
         </div>
       </section>
@@ -878,6 +889,34 @@ var RFID_FAMILIES = {
     return document.querySelectorAll('input[data-field], textarea[data-field], .yn[data-field], .btn-group[data-field]');
   }
 
+  // ---- Per-section status dots: green once that section has anything filled in ----
+  var SECTION_FIELDS = {
+    'sec-job':      ['customerName','jobNumber','salesRep'],
+    'sec-proof':    ['proofOptions','proofAttention','signOffDate','proofCustomDetails'],
+    'sec-callouts': ['pliOnBack','arrow','pcNumber'],
+    'sec-art':      ['frontArt','backArt'],
+    'sec-tooling':  ['lockSystem','lockSystemTech','dieNumber','size','thickness'],
+    'sec-rfid':     ['rfidInlayType','vingEncoding'],
+    'sec-magenc':   ['magEncodingType','magTracks','magEncodingDetails'],
+    'sec-stock':    ['stock','stockColor'],
+    'sec-press':    ['pressTarget','pressFrontFinish','pressBackFinish','frontColor','backColor','bleeds'],
+    'sec-silk':     ['silkScreen','silkScreenTarget','screenType','screenEffect'],
+    'sec-finish':   ['holePunch','holePunchDetails','shrinkWrapPacks','sleeve','sleeveLabels'],
+    'sec-ship':     ['overageOK','shipEarly','undersOK'],
+    'sec-notes':    ['instructions']
+  };
+  function updateSectionDots(){
+    Object.keys(SECTION_FIELDS).forEach(function(secId){
+      var any = SECTION_FIELDS[secId].some(function(f){
+        var el = document.querySelector('[data-field="' + f + '"]');
+        return el && getValue(el).trim() !== '';
+      });
+      var btn = document.querySelector('.sec-static[data-target="' + secId + '"], .sec-toggle[data-target="' + secId + '"]');
+      var dot = btn && btn.querySelector('.dot');
+      if (dot) dot.classList.toggle('done', any);
+    });
+  }
+
   // ---- Button-group fields (replace what used to be dropdowns) ----
   function populateBtnGroup(el, choices){
     el.innerHTML = '';
@@ -997,7 +1036,11 @@ var RFID_FAMILIES = {
     if (field === 'silkScreen') silkPanel.classList.toggle('open', silkYN.value === 'Yes');
     if (field === 'holePunch') holeField.style.display = (holeYN.value === 'Yes') ? 'flex' : 'none';
     if (field === 'proofOptions') proofCustomField.style.display = (proofOptionsGroup.value === 'Customer Specific') ? 'flex' : 'none';
+    updateSectionDots();
   }
+  document.querySelectorAll('input[data-field], textarea[data-field]').forEach(function(el){
+    el.addEventListener('input', updateSectionDots);
+  });
 
   // ---- Required sections: click to jump/scroll to them (always included, no toggle) ----
   document.querySelectorAll('.sec-static').forEach(function(btn){
@@ -1067,6 +1110,7 @@ var RFID_FAMILIES = {
     onFieldChange('silkScreen');
     onFieldChange('holePunch');
     onFieldChange('proofOptions');
+    updateSectionDots();
     return mismatches;
   }
 
@@ -1278,6 +1322,8 @@ var RFID_FAMILIES = {
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape' && !guideOverlay.hidden) closeGuide();
   });
+
+  updateSectionDots();
 })();
 </script>
 
