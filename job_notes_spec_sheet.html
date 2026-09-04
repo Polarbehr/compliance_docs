@@ -544,7 +544,7 @@
             <div class="field"><label>Back Color</label><input type="text" data-field="backColor" data-label="Back Color" placeholder="# of colors / PMS codes"></div>
             <div class="field span-2">
               <label>Bleeds</label>
-              <div class="btn-group" data-field="bleeds" data-label="Bleeds" data-options="bleeds"></div>
+              <div class="btn-group" data-field="bleeds" data-label="Bleeds" data-options="bleeds" data-multi="true"></div>
             </div>
           </div>
         </div>
@@ -860,7 +860,7 @@ var DROPDOWN_OPTIONS = {
   artStatus:         ["New", "Previous"],
   pressTarget:       ["Internal Proof", "Default Color Settings", "Archive", "PMS", "Hard Copy Proof", "Drawdown", "Enclosed Sample"],
   pressFinish:       ["Gloss", "Satin", "Matte", "UV", "Raw"],
-  bleeds:            ["Front", "Back", "Both", "None"],
+  bleeds:            ["Front", "Back"],
   silkScreenTarget:  ["Archive", "New"],
   screenType:        ["Flood", "Spot"],
   magEncodingType:   ["Hi-Co", "Mid-Co", "Lo-Co"],
@@ -939,7 +939,7 @@ var RFID_FAMILIES = {
       Array.prototype.forEach.call(el.children, function(btn){
         btn.classList.toggle('active', matched && btn.textContent === v);
       });
-      el.setAttribute('data-print-val', el.value || '—');
+      el.setAttribute('data-print-val', el.value || fallbackFor(el));
       onFieldChange(el.getAttribute('data-field'));
     }
     el._setVal = setVal;
@@ -961,7 +961,7 @@ var RFID_FAMILIES = {
         btn.classList.toggle('active', selected.indexOf(btn.textContent) !== -1);
       });
       el.value = currentValue();
-      el.setAttribute('data-print-val', el.value || '—');
+      el.setAttribute('data-print-val', el.value || fallbackFor(el));
     }
     choices.forEach(function(choice){
       var b = document.createElement('button');
@@ -1261,15 +1261,22 @@ var RFID_FAMILIES = {
   function padCol(text, width){
     return text.length >= width ? text + '  ' : text + ' '.repeat(width - text.length);
   }
+  // Blank fields normally show as "—", but a couple of fields have a real
+  // meaning for "nothing selected" that reads better than a bare dash.
+  function fallbackFor(el){
+    if (el.classList.contains('yn')) return 'No';
+    if (el.getAttribute('data-field') === 'bleeds') return 'None';
+    return '—';
+  }
   function twoColumnLines(pairs){
     var COL_WIDTH = 44;
     var lines = [];
     for (var i = 0; i < pairs.length; i += 2) {
       var left = pairs[i];
-      var leftText = left.label + ': ' + (left.value || (left.isYN ? 'No' : '—'));
+      var leftText = left.label + ': ' + (left.value || left.fallback);
       var right = pairs[i + 1];
       if (right) {
-        var rightText = right.label + ': ' + (right.value || (right.isYN ? 'No' : '—'));
+        var rightText = right.label + ': ' + (right.value || right.fallback);
         lines.push(padCol(leftText, COL_WIDTH) + rightText);
       } else {
         lines.push(leftText);
@@ -1292,7 +1299,7 @@ var RFID_FAMILIES = {
       var title = card.querySelector('h2').textContent;
       lines.push('== ' + title.toUpperCase() + ' ==');
       var pairs = Array.prototype.map.call(fields, function(el){
-        return { label: el.getAttribute('data-label'), value: getValue(el).trim(), isYN: el.classList.contains('yn') };
+        return { label: el.getAttribute('data-label'), value: getValue(el).trim(), fallback: fallbackFor(el) };
       });
       lines = lines.concat(twoColumnLines(pairs));
       lines.push('');
@@ -1344,7 +1351,7 @@ var RFID_FAMILIES = {
       g.setAttribute('data-print-val', g.value || 'No');
     });
     document.querySelectorAll('.btn-group[data-field]').forEach(function(g){
-      g.setAttribute('data-print-val', g.value || '—');
+      g.setAttribute('data-print-val', g.value || fallbackFor(g));
     });
   });
 
