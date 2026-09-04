@@ -1,7 +1,7 @@
 Option Explicit
 
 ' =============================================================================
-' PLI PERSO WORKBOOK -- Module1 (v3.15, 2026-09-03)
+' PLI PERSO WORKBOOK -- Module1 (v3.16, 2026-09-03)
 '
 ' The version is ALSO held in the MODULE_VERSION constant below and printed at
 ' the end of every Update Data run, so the build a workbook is actually running
@@ -13,6 +13,28 @@ Option Explicit
 '   ---------------------------------------------------------------------
 '   REVISION HISTORY
 '   ---------------------------------------------------------------------
+'   v3.16  2026-09-03
+'       * v3.15 still did not clear them: the diagnostic came back
+'         "CellControl: PRESENT, Type 2" after a build whose removal chain
+'         was SetNone / Remove / Delete / Clear, so none of those four is
+'         the name this Excel uses (Type 2 is the checkbox, 0 is none).
+'         Three more candidates added to RemoveCellCheckbox: assigning
+'         Type = 0 directly, a Range-level ClearCellControl, and -- last
+'         resort -- a FULL Copy+Paste from a scratch cell, which is
+'         categorically different from v3.13's formats-only paste because
+'         a full paste replaces the destination cell outright rather than
+'         applying only what the source has.
+'       * NEW, manual: ProbeCellCheckboxRemoval (Alt+F8). Settles the
+'         question by experiment instead of inference -- puts a real
+'         checkbox on a scratch cell, tries ONE candidate, reads the Type
+'         back, repeats with a fresh checkbox for the next. Whichever line
+'         reports REMOVED IT is the call this build supports. Only the
+'         scratch cell is touched, and it is cleared afterwards.
+'       * The finish message now states what the spacer cleanup actually
+'         did ("Spacer-row checkboxes cleared: n", or FOUND, NOT REMOVED).
+'         Across three rounds there was no way to tell "the fix did not
+'         work" apart from "the new code never ran", which is its own kind
+'         of blindness. Now the run says which.
 '   v3.15  2026-09-03
 '       * Spacer-row checkboxes FIXED, this time from evidence rather than
 '         from a guess. DiagnoseTracieCheckboxes on the live sheet reported
@@ -323,10 +345,12 @@ Private Const STALE_HUB_HOURS As Double = 12#
 '   v3.13 Second (also unsuccessful) attempt at the spacer-row checkbox
 '   v3.14 AutoFilter arrows removed; third spacer-row checkbox attempt,
 '         covering cell AND shape mechanisms; + DiagnoseTracieCheckboxes
-'   v3.15 Spacer-row checkboxes fixed for real, from the diagnostic's
-'         evidence: removed via the CellControl API, the only thing that
-'         touches them. Same fix applied below the data footprint.
-Private Const MODULE_VERSION As String = "v3.15"
+'   v3.15 Removal moved to the CellControl API; four candidate names, none
+'         of which turned out to be the right one on this build
+'   v3.16 Three more removal candidates incl. a full-paste last resort;
+'         + ProbeCellCheckboxRemoval to settle it by experiment; the run
+'         now reports what the spacer cleanup actually did
+Private Const MODULE_VERSION As String = "v3.16"
 
 ' -----------------------------------------------------------------------------
 ' UPDATE DATA BUTTON -- second caption line and state colour (v3).
@@ -380,6 +404,16 @@ Private gSetupWarnings As String
 ' The Hub report timestamp for the run in progress.
 Private gHubDataStamp As String
 
+' What the spacer-row checkbox cleanup actually did this run, reported in
+' the finish message. Three rounds of "it's still there" could not be told
+' apart from "the new code never ran", so the run now says so out loud.
+Private gSpacerBoxNote As String
+
+' Scratch cell for the last-resort full-paste in RemoveCellCheckbox. Past
+' the column-50 (AX) clamp and clear of the AZ1/AZ2 checkbox template
+' stash, so nothing this workbook uses can be caught by it.
+Private Const SCRATCH_CELL As String = "BA1"
+
 ' =============================================================================
 ' ENTRY POINT -- wired to the "Update Data" button on Preferences.
 ' =============================================================================
@@ -420,6 +454,7 @@ Public Sub UpdatePersoData()
     ' with nothing recorded anywhere.
     gSetupWarnings = ""
     gHubDataStamp = ""
+    gSpacerBoxNote = ""
     Dim setupStep As String
     On Error GoTo SetupFailed
     setupStep = "EnsurePreferencesSheet": EnsurePreferencesSheet
@@ -520,6 +555,7 @@ Public Sub UpdatePersoData()
            "Module1 " & MODULE_VERSION & vbCrLf & vbCrLf & _
            "Hub status at pull time: " & hubStatusWord & IIf(hubStatusDetail <> "", " (" & hubStatusDetail & ")", "") & vbCrLf & _
            "Jobs on " & OUT_SHEET & ": " & builtRows & _
+           IIf(gSpacerBoxNote <> "", vbCrLf & gSpacerBoxNote, "") & _
            IIf(discovered <> "", vbCrLf & vbCrLf & "New work centers added to the Machine Roster " & _
                "(unticked -- tick to show them):" & discovered, "") & _
            SetupWarningBlock() & staleNote, vbInformation
@@ -1129,16 +1165,22 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
         End If
     Next sr
 
-    If Not sepCells Is Nothing Then
-        If Not RemoveCellCheckbox(sepCells) Then
+    If sepCells Is Nothing Then
+        gSpacerBoxNote = "Spacer rows: none this run (single machine group)."
+    Else
+        If RemoveCellCheckbox(sepCells) Then
+            gSpacerBoxNote = "Spacer-row checkboxes cleared: " & sepRows.Count & "."
+        Else
+            gSpacerBoxNote = "Spacer-row checkboxes: " & sepRows.Count & " FOUND, NOT REMOVED."
             gSetupWarnings = gSetupWarnings & vbCrLf & _
                 "- The Rdy checkboxes on the black spacer rows could not be removed. " & _
-                "Run DiagnoseTracieCheckboxes (Alt+F8) and send the result on."
+                "Run ProbeCellCheckboxRemoval (Alt+F8) -- it tests each way of removing " & _
+                "one against a scratch cell and reports which this Excel supports."
         End If
         ' The checkbox paste in EnsureCheckboxFormats also brought the
-        ' template cell's own look with it; the spacer's black fill was
-        ' painted over that during the loop above, so only re-assert the
-        ' pieces the control could have carried.
+        ' template cell's own look with it, and the last-resort full paste
+        ' inside RemoveCellCheckbox blanks the cell outright, so the
+        ' spacer's black fill is re-asserted here either way.
         sepCells.NumberFormat = "General"
         sepCells.Interior.Color = RGB(0, 0, 0)
     End If
@@ -1591,13 +1633,23 @@ End Sub
 ' all three left CellControl reporting PRESENT.
 '
 ' Every call is LATE-BOUND on purpose. CellControl only exists on recent
-' builds of Excel, and the method that clears one is not something this can
-' verify from here, so a name this Excel does not have has to be a catchable
+' builds of Excel, and the method that clears one cannot be verified from
+' outside Excel, so a name this build does not have has to be a catchable
 ' runtime error rather than a compile error that would break the whole
-' module. SetNone is the documented counterpart to the SetCheckbox that
-' Press uses; the rest are tried in case this build names it differently,
-' and each attempt is verified by re-reading the control rather than
-' assumed to have worked.
+' module. Each attempt is verified by RE-READING the control afterwards,
+' never assumed to have worked.
+'
+' 2026-09.03, second round on this: the diagnostic came back
+' "CellControl: PRESENT, Type 2" AFTER a build whose removal chain was
+' SetNone / Remove / Delete / Clear -- so none of those four is the name
+' this Excel uses (Type 2 is the checkbox; 0 would be none). Added below:
+' assigning Type = 0 directly, a Range-level ClearCellControl, and finally
+' a FULL Copy+Paste from a scratch cell known to hold no control. That last
+' one matters because it is categorically different from the v3.13 attempt:
+' PasteSpecial xlPasteFormats applies what the source HAS and so cannot
+' clear what it lacks, whereas a full paste replaces the destination cell
+' outright. Run ProbeCellCheckboxRemoval (Alt+F8) to see exactly which of
+' these this build of Excel actually supports.
 '
 ' Returns True if the range ends up with no checkbox -- including on an
 ' Excel too old to have CellControl at all, which therefore cannot have put
@@ -1622,12 +1674,34 @@ Private Function RemoveCellCheckbox(ByRef target As Range) As Boolean
         Exit Function
     End If
 
+    ' Method names first -- cheapest, and they leave everything else alone.
     Err.Clear: cc.SetNone
     If Not CellCheckboxGone(target) Then Err.Clear: cc.Remove
     If Not CellCheckboxGone(target) Then Err.Clear: cc.Delete
     If Not CellCheckboxGone(target) Then Err.Clear: cc.Clear
+    ' Type as a writable property rather than a method call.
+    If Not CellCheckboxGone(target) Then Err.Clear: cc.Type = 0
+    ' A Range-level clear, if this build puts it there instead.
+    If Not CellCheckboxGone(target) Then Err.Clear: target.ClearCellControl
     Err.Clear
     On Error GoTo 0
+
+    ' Last resort: replace the cells wholesale. A full paste (not a formats
+    ' paste) overwrites the destination cell entirely, control included.
+    ' The scratch cell is cleared first so it is guaranteed control-free,
+    ' and it lives past the column-50 clamp so nothing else can be touched.
+    If Not CellCheckboxGone(target) Then
+        On Error Resume Next
+        Dim scratch As Range
+        Set scratch = target.Worksheet.Range(SCRATCH_CELL)
+        scratch.Clear
+        scratch.Copy
+        target.PasteSpecial xlPasteAll
+        Application.CutCopyMode = False
+        scratch.Clear
+        Err.Clear
+        On Error GoTo 0
+    End If
 
     RemoveCellCheckbox = CellCheckboxGone(target)
 End Function
@@ -2845,6 +2919,145 @@ Public Sub DiagnoseTracieCheckboxes()
 
     MsgBox rpt, vbInformation, "Diagnose Checkboxes"
 End Sub
+
+' =============================================================================
+' PROBE: WHICH WAY OF REMOVING AN IN-CELL CHECKBOX DOES THIS EXCEL SUPPORT?
+' (2026-09.03) -- Alt+F8, manual.
+'
+' Three fixes in a row failed because the removal API had to be guessed from
+' outside Excel: the diagnostic proved the box is a cell-native CellControl
+' (Type 2), but not which call takes one off. This settles that by
+' EXPERIMENT rather than inference -- it puts a real checkbox on a scratch
+' cell, tries one candidate, reads the Type back, and repeats with a fresh
+' checkbox for the next candidate.
+'
+' Touches only SCRATCH_CELL, well past anything this workbook uses, and
+' clears it at the end. The Tracie data is never involved.
+' =============================================================================
+Public Sub ProbeCellCheckboxRemoval()
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Sheets(OUT_SHEET)
+    On Error GoTo 0
+    If ws Is Nothing Then
+        MsgBox "No '" & OUT_SHEET & "' sheet in this workbook.", vbExclamation, "Probe Checkbox Removal"
+        Exit Sub
+    End If
+
+    If Trim(CStr(ws.Range("AZ2").Value)) <> "chk-template" Then
+        MsgBox "The checkbox template at AZ1 has not been captured yet." & vbCrLf & vbCrLf & _
+               "Run Update Data once first, then run this again.", _
+               vbExclamation, "Probe Checkbox Removal"
+        Exit Sub
+    End If
+
+    Dim scratch As Range
+    Set scratch = ws.Range(SCRATCH_CELL)
+
+    Dim rpt As String
+    rpt = "Which checkbox removal does this Excel support?" & vbCrLf & _
+          "Module " & MODULE_VERSION & "   scratch cell " & SCRATCH_CELL & vbCrLf & vbCrLf
+
+    ' Confirm a checkbox can be put there at all, so a "gone" result below
+    ' means the candidate worked rather than that nothing was ever set.
+    rpt = rpt & "Checkbox applied to scratch: " & _
+          IIf(ProbeApplyCheckbox(ws, scratch), "yes (Type " & ProbeTypeText(scratch) & ")", "NO -- results below are meaningless") & _
+          vbCrLf & vbCrLf
+
+    Dim names As Variant
+    names = Array("cc.SetNone", "cc.Remove", "cc.Delete", "cc.Clear", _
+                  "cc.Type = 0", "Range.ClearCellControl", _
+                  "Range.ClearFormats", "Range.Clear", "full Copy+Paste")
+
+    Dim k As Long, cc As Object, errNum As Long, errTxt As String
+    For k = LBound(names) To UBound(names)
+        ProbeApplyCheckbox ws, scratch
+
+        Set cc = Nothing
+        errNum = 0: errTxt = ""
+        On Error Resume Next
+        Err.Clear
+        Set cc = scratch.CellControl
+
+        Select Case k
+            Case 0: cc.SetNone
+            Case 1: cc.Remove
+            Case 2: cc.Delete
+            Case 3: cc.Clear
+            Case 4: cc.Type = 0
+            Case 5: scratch.ClearCellControl
+            Case 6: scratch.ClearFormats
+            Case 7: scratch.Clear
+            Case 8
+                Dim spare As Range
+                Set spare = ws.Range(SCRATCH_CELL).Offset(1, 0)
+                spare.Clear
+                spare.Copy
+                scratch.PasteSpecial xlPasteAll
+                Application.CutCopyMode = False
+                spare.Clear
+        End Select
+
+        errNum = Err.Number
+        errTxt = Err.Description
+        Err.Clear
+        On Error GoTo 0
+
+        rpt = rpt & names(k) & vbCrLf & _
+              "    error : " & IIf(errNum = 0, "none", errNum & " " & errTxt) & vbCrLf & _
+              "    after : Type " & ProbeTypeText(scratch) & _
+              IIf(CellCheckboxGone(scratch), "   <-- REMOVED IT", "") & vbCrLf
+    Next k
+
+    On Error Resume Next
+    scratch.Clear
+    ws.Range(SCRATCH_CELL).Offset(1, 0).Clear
+    Err.Clear
+    On Error GoTo 0
+
+    rpt = rpt & vbCrLf & "Send this whole box back -- whichever line says REMOVED IT " & _
+          "is the one the build should use."
+
+    MsgBox rpt, vbInformation, "Probe Checkbox Removal"
+End Sub
+
+' Puts a real checkbox on the scratch cell, the same way the module does it
+' everywhere else (clone the stashed AZ1 template). True if one took.
+Private Function ProbeApplyCheckbox(ByRef ws As Worksheet, ByRef target As Range) As Boolean
+    On Error Resume Next
+    target.Clear
+    ws.Range("AZ1").Copy
+    target.PasteSpecial xlPasteFormats
+    Application.CutCopyMode = False
+    Err.Clear
+    On Error GoTo 0
+    ProbeApplyCheckbox = Not CellCheckboxGone(target)
+End Function
+
+' CellControl.Type as text, or why it could not be read.
+Private Function ProbeTypeText(ByRef target As Range) As String
+    Dim cc As Object, t As Variant
+    ProbeTypeText = "?"
+    On Error Resume Next
+    Set cc = Nothing
+    Err.Clear
+    Set cc = target.CellControl
+    If Err.Number <> 0 Then
+        ProbeTypeText = "unreachable (err " & Err.Number & ")"
+    ElseIf cc Is Nothing Then
+        ProbeTypeText = "no control"
+    Else
+        Err.Clear
+        t = cc.Type
+        If Err.Number = 0 Then
+            ProbeTypeText = CStr(t)
+        Else
+            ProbeTypeText = "unreadable (err " & Err.Number & ")"
+        End If
+    End If
+    Err.Clear
+    On Error GoTo 0
+End Function
 
 ' Reads "<key><digits>" out of the button's AlternativeText tag, or -1.
 Private Function ReadTagNum(ByVal tag As String, ByVal key As String) As Long
