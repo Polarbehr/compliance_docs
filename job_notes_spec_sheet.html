@@ -1336,7 +1336,7 @@ var RFID_FAMILIES = {
       rows.push(right ? padCol(left, COL_WIDTH) + right : left);
     }
 
-    var lines = ['PRESS JOB SPEC SHEET', 'Generated: ' + new Date().toLocaleString(), ''].concat(rows);
+    var lines = rows;
 
     var notesCard = document.getElementById('sec-notes');
     if (!notesCard.hidden) {
