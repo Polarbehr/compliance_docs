@@ -147,14 +147,6 @@
   #silkFrontEffectDetailsField{grid-column:1; grid-row:4;}
   #silkBackEffectDetailsField{grid-column:2; grid-row:4;}
 
-  #shrinkWrapField{grid-column:1; grid-row:1;}
-  #shrinkWrapPacksField{grid-column:1; grid-row:2;}
-  #shrinkWrapSpecialField{grid-column:1; grid-row:3;}
-  #sleeveField{grid-column:2; grid-row:1;}
-  #sleeveTypeField{grid-column:2; grid-row:2;}
-  #sleeveTypeDetailsField{grid-column:2; grid-row:3;}
-  #sleeveLabelsField{grid-column:2; grid-row:4;}
-
   #stockMaterialField{grid-column:1; grid-row:1;}
   #stockColorField{grid-column:2; grid-row:1;}
   #stockPaperFinishField{grid-column:1; grid-row:2;}
@@ -168,8 +160,6 @@
     #silkFrontEffectField, #silkBackEffectField, #silkFrontTargetField, #silkBackTargetField,
     #silkFrontScreenNumberField, #silkBackScreenNumberField,
     #silkFrontEffectDetailsField, #silkBackEffectDetailsField,
-    #shrinkWrapField, #shrinkWrapPacksField, #shrinkWrapSpecialField,
-    #sleeveField, #sleeveTypeField, #sleeveTypeDetailsField, #sleeveLabelsField,
     #stockMaterialField, #stockColorField, #stockPaperFinishField, #stockPlasticTypeField,
     #magStripeColorField, #magStripeColorCustomField{
       grid-column:1; grid-row:auto;
@@ -177,18 +167,14 @@
   }
   .field label{font-size:12.5px;font-weight:700;color:#3a3530;display:flex;justify-content:space-between;}
   .field label .req{color:var(--magenta);font-weight:800;}
-  /* Hole Punch's own row: Hole Punch / Hole Type / Orientation side by side,
-     separated by thin dividers instead of stacked as separate grid rows. */
-  .hole-row{display:flex;align-items:flex-start;flex-wrap:wrap;row-gap:16px;}
-  .hole-item{display:flex;flex-direction:column;gap:8px;padding:0 20px;}
-  .hole-item:first-child{padding-left:0;}
-  .hole-item + .hole-item{border-left:1px solid var(--line);}
-  /* Location + Offset sit side by side below that row. */
-  .hole-location-wrap{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;}
-  .hole-location-wrap .subpanel{flex:1;min-width:260px;}
-  .offset-box{
-    display:flex;align-items:center;gap:8px;flex:none;
-    border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:rgba(0,0,0,.02);
+  /* Finishing & Packaging: Hole Punch and its details in the left column,
+     Shrink Wrap and its details in the right column, divided by a rule. */
+  .finish-two-col{display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;}
+  .finish-two-col > .col{flex:1;min-width:260px;display:flex;flex-direction:column;}
+  .finish-two-col > .col + .col{border-left:1px solid var(--line);padding-left:20px;}
+  .hole-top-mini-row{display:flex;gap:20px;flex-wrap:wrap;}
+  @media (max-width:640px){
+    .finish-two-col > .col + .col{border-left:none;padding-left:0;border-top:1px solid var(--line);padding-top:16px;}
   }
   /* Bordered nested group for a cluster of related sub-options (e.g. Hole
      Punch Location) — sets it apart from the plain field grid around it. */
@@ -737,57 +723,63 @@
       <section class="card" id="sec-finish">
         <div class="head"><div class="ic c8">📦</div><div><h2>Finishing &amp; Packaging</h2><p>Post-press operations and how the job ships out.</p></div></div>
         <div class="body">
-          <div class="hole-row">
-            <div class="hole-item">
-              <label>Hole Punch</label>
-              <div class="yn" data-field="holePunch" data-label="Hole Punch"><button type="button" class="yes">Yes</button></div>
-            </div>
-            <div class="hole-item" id="holeTypeItem" style="display:none;">
-              <label>Hole Type</label>
-              <div class="btn-group" data-field="holeType" data-label="Hole Type" data-options="holeType"></div>
-            </div>
-            <div class="hole-item" id="holeOrientationItem" style="display:none;">
-              <label>Orientation</label>
-              <div class="btn-group" data-field="holeOrientation" data-label="Orientation" data-options="holeOrientation"></div>
-            </div>
-          </div>
-          <div class="hole-location-wrap" id="holeLocationWrap" style="display:none; margin-top:16px;">
-            <div class="subpanel">
-              <div class="subpanel-head"><label>Location</label></div>
-              <div class="subpanel-row">
-                <span class="row-label">Edge</span>
-                <div class="btn-group" data-field="holeEdge" data-label="Location" data-options="holeEdge"></div>
+          <div class="finish-two-col">
+            <div class="col">
+              <div class="hole-top-mini-row">
+                <div class="field">
+                  <label>Hole Punch</label>
+                  <div class="yn" data-field="holePunch" data-label="Hole Punch"><button type="button" class="yes">Yes</button></div>
+                </div>
+                <div class="field" id="holeOffsetField" style="display:none;">
+                  <label>Offset</label>
+                  <div class="yn" data-field="holeOffset" data-label="Offset"><button type="button" class="yes">Yes</button></div>
+                </div>
               </div>
-              <div class="subpanel-row" id="holePositionRow" style="display:none;">
-                <span class="row-label">Position</span>
-                <div class="btn-group" data-field="holePosition" data-label="Position" data-options="holePosition"></div>
+              <div class="grid" id="holeTypeOrientationRow" style="display:none; margin-top:16px;">
+                <div class="field">
+                  <label>Hole Type</label>
+                  <div class="btn-group" data-field="holeType" data-label="Hole Type" data-options="holeType"></div>
+                </div>
+                <div class="field">
+                  <label>Orientation</label>
+                  <div class="btn-group" data-field="holeOrientation" data-label="Orientation" data-options="holeOrientation"></div>
+                </div>
+              </div>
+              <div class="subpanel" id="holeLocationWrap" style="display:none; margin-top:16px;">
+                <div class="subpanel-head"><label>Location</label></div>
+                <div class="subpanel-row">
+                  <span class="row-label">Edge</span>
+                  <div class="btn-group" data-field="holeEdge" data-label="Location" data-options="holeEdge"></div>
+                </div>
+                <div class="subpanel-row" id="holePositionRow" style="display:none;">
+                  <span class="row-label">Position</span>
+                  <div class="btn-group" data-field="holePosition" data-label="Position" data-options="holePosition"></div>
+                </div>
               </div>
             </div>
-            <div class="offset-box">
-              <span class="hint">Offset</span>
-              <div class="yn" data-field="holeOffset" data-label="Offset"><button type="button" class="yes">Yes</button></div>
+            <div class="col">
+              <div class="field" id="shrinkWrapField">
+                <label>Shrink Wrap</label>
+                <div class="yn" data-field="shrinkWrap" data-label="Shrink Wrap"><button type="button" class="yes">Yes</button></div>
+              </div>
+              <div class="field" id="shrinkWrapPacksField" style="display:none; margin-top:16px;">
+                <label>Shrink Wrap Packs</label>
+                <div class="btn-group" data-field="shrinkWrapPacks" data-label="Shrink Wrap Packs" data-options="shrinkWrapPacks"></div>
+              </div>
+              <div class="field" id="shrinkWrapSpecialField" style="display:none; margin-top:16px;">
+                <label>Shrink Wrap — Special Details</label>
+                <input type="text" data-field="shrinkWrapSpecialDetails" data-label="Shrink Wrap Special Details" placeholder="Specify pack quantity">
+              </div>
             </div>
           </div>
           <div class="grid" style="margin-top:16px;">
-            <div class="field" id="shrinkWrapField">
-              <label>Shrink Wrap</label>
-              <div class="yn" data-field="shrinkWrap" data-label="Shrink Wrap"><button type="button" class="yes">Yes</button></div>
-            </div>
             <div class="field" id="sleeveField">
               <label>Sleeve Qty</label>
               <div class="btn-group" data-field="sleeve" data-label="Sleeve Qty" data-options="sleeveQty"></div>
             </div>
-            <div class="field" id="shrinkWrapPacksField" style="display:none;">
-              <label>Shrink Wrap Packs</label>
-              <div class="btn-group" data-field="shrinkWrapPacks" data-label="Shrink Wrap Packs" data-options="shrinkWrapPacks"></div>
-            </div>
             <div class="field" id="sleeveTypeField">
               <label>Sleeve Type</label>
               <div class="btn-group" data-field="sleeveType" data-label="Sleeve Type" data-options="sleeveType"></div>
-            </div>
-            <div class="field" id="shrinkWrapSpecialField" style="display:none;">
-              <label>Shrink Wrap — Special Details</label>
-              <input type="text" data-field="shrinkWrapSpecialDetails" data-label="Shrink Wrap Special Details" placeholder="Specify pack quantity">
             </div>
             <div class="field" id="sleeveTypeDetailsField" style="display:none;">
               <label>Sleeve — Customer Specific Details</label>
@@ -1621,8 +1613,8 @@ var RFID_FAMILIES = {
 
   // ---- Conditional reveals ----
   var holeYN = document.querySelector('.yn[data-field="holePunch"]');
-  var holeTypeItem = document.getElementById('holeTypeItem');
-  var holeOrientationItem = document.getElementById('holeOrientationItem');
+  var holeOffsetField = document.getElementById('holeOffsetField');
+  var holeTypeOrientationRow = document.getElementById('holeTypeOrientationRow');
   var holeLocationWrap = document.getElementById('holeLocationWrap');
   var holeEdgeGroup = document.querySelector('.btn-group[data-field="holeEdge"]');
   var holePositionRow = document.getElementById('holePositionRow');
@@ -1653,9 +1645,9 @@ var RFID_FAMILIES = {
   function onFieldChange(field){
     if (field === 'holePunch') {
       var punchOn = holeYN.value === 'Yes';
-      holeTypeItem.style.display = punchOn ? 'flex' : 'none';
-      holeOrientationItem.style.display = punchOn ? 'flex' : 'none';
-      holeLocationWrap.style.display = punchOn ? 'flex' : 'none';
+      holeOffsetField.style.display = punchOn ? 'flex' : 'none';
+      holeTypeOrientationRow.style.display = punchOn ? 'grid' : 'none';
+      holeLocationWrap.style.display = punchOn ? 'block' : 'none';
     }
     if (field === 'holeEdge') holePositionRow.style.display = holeEdgeGroup.value ? 'flex' : 'none';
     if (field === 'proofOptions') proofCustomField.style.display = (proofOptionsGroup.value === 'Customer Specific') ? 'flex' : 'none';
