@@ -1223,19 +1223,19 @@ var RFID_FAMILIES = {
   };
   selectRfidFamily(null);
 
-  // ---- Die #: load a dieline folder the user picks, walk its entire
-  // subfolder tree in one pass (the picker's permission covers everything
-  // nested beneath the picked folder, no repeat prompts needed), and let
-  // people navigate it: folder buttons drill in, files in the current
-  // folder show as the actual Die # choices below them.
+  // ---- Die #: load a dieline folder the user picks and browse it lazily —
+  // only the folder currently on screen gets read. Clicking a folder button
+  // reads that folder's contents on the spot; breadcrumbs step back the
+  // same way. Nothing beneath the current folder is scanned ahead of time.
   var dieNumberGroup = document.getElementById('dieNumberGroup');
   var dieFolderGroup = document.getElementById('dieFolderGroup');
   var dieBreadcrumb = document.getElementById('dieBreadcrumb');
   var dieFilesLabel = document.getElementById('dieFilesLabel');
   var dieFolderStatus = document.getElementById('dieFolderStatus');
   dieNumberGroup.value = '';
-  var dieTreeRoot = null;   // {name, files:[...], folders:[{...}, ...]} once loaded
-  var dieCurrentPath = [];  // folder names from root to the folder being viewed
+  var dieRootHandle = null;    // FileSystemDirectoryHandle of the loaded root
+  var dieCurrentPath = [];     // [{name, handle}, ...] subfolder steps below root to the folder on screen
+  var dieCurrentLevel = null;  // {folders:[{name,handle}], files:[name,...]} for the folder on screen
 
   function dieNaturalCompare(a, b){
     return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
@@ -1280,37 +1280,31 @@ var RFID_FAMILIES = {
       });
     } catch (e) { return null; }
   }
-  async function readDieTree(dirHandle){
-    var node = { name: dirHandle.name, files: [], folders: [] };
+  // Reads only the immediate contents of one folder — no recursion, so a
+  // folder with thousands of files elsewhere in the tree costs nothing
+  // until someone actually clicks into it.
+  async function readDieFolderLevel(dirHandle){
+    var folders = [], files = [];
     for await (var entry of dirHandle.values()) {
-      if (entry.kind === 'file') node.files.push(entry.name.replace(/\.[^.]+$/, ''));
-      else if (entry.kind === 'directory') node.folders.push(await readDieTree(entry));
+      if (entry.kind === 'file') files.push(entry.name.replace(/\.[^.]+$/, ''));
+      else if (entry.kind === 'directory') folders.push({ name: entry.name, handle: entry });
     }
-    node.files.sort(dieNaturalCompare);
-    node.folders.sort(function(a, b){ return dieNaturalCompare(a.name, b.name); });
-    return node;
+    files.sort(dieNaturalCompare);
+    folders.sort(function(a, b){ return dieNaturalCompare(a.name, b.name); });
+    return { folders: folders, files: files };
   }
-  function countDieFiles(node){
-    var count = node.files.length;
-    node.folders.forEach(function(f){ count += countDieFiles(f); });
-    return count;
-  }
-  // Depth-first search across the whole tree for a filename; returns the
-  // folder-path array to reach it, or null if it's nowhere in the tree.
-  function findDiePath(node, val, pathSoFar){
-    if (node.files.indexOf(val) !== -1) return pathSoFar;
-    for (var i = 0; i < node.folders.length; i++) {
-      var found = findDiePath(node.folders[i], val, pathSoFar.concat([node.folders[i].name]));
+  // Recursive depth-first walk used only to re-locate a die value that was
+  // set before its folder was ever on screen (e.g. from a loaded draft) —
+  // a deliberate one-off search, not part of normal folder-by-folder
+  // browsing. Returns the subfolder-step path to reach it, or null.
+  async function searchDieFolderForFile(dirHandle, val, pathSoFar){
+    var level = await readDieFolderLevel(dirHandle);
+    if (level.files.indexOf(val) !== -1) return pathSoFar;
+    for (var i = 0; i < level.folders.length; i++) {
+      var found = await searchDieFolderForFile(level.folders[i].handle, val, pathSoFar.concat([level.folders[i]]));
       if (found) return found;
     }
     return null;
-  }
-  function currentDieNode(){
-    var node = dieTreeRoot;
-    for (var i = 0; node && i < dieCurrentPath.length; i++) {
-      node = node.folders.filter(function(f){ return f.name === dieCurrentPath[i]; })[0];
-    }
-    return node || dieTreeRoot;
   }
 
   function clearDieSelection(){
@@ -1348,10 +1342,11 @@ var RFID_FAMILIES = {
     }
 
     dieBreadcrumb.innerHTML = '';
-    dieBreadcrumb.style.display = dieTreeRoot ? 'flex' : 'none';
-    if (dieTreeRoot) {
-      var crumbs = [dieTreeRoot.name].concat(dieCurrentPath);
-      crumbs.forEach(function(name, idx){
+    dieBreadcrumb.style.display = dieRootHandle ? 'flex' : 'none';
+    if (dieRootHandle) {
+      var pathSnapshot = dieCurrentPath.slice();
+      var crumbNames = [dieRootHandle.name].concat(pathSnapshot.map(function(s){ return s.name; }));
+      crumbNames.forEach(function(name, idx){
         if (idx > 0) {
           var sep = document.createElement('span');
           sep.className = 'crumb-sep';
@@ -1363,35 +1358,34 @@ var RFID_FAMILIES = {
         link.className = 'crumb-btn';
         link.textContent = name;
         link.addEventListener('click', function(){
-          dieCurrentPath = crumbs.slice(1, idx + 1);
-          renderDieBrowser();
+          navigateDieTo(pathSnapshot.slice(0, idx));
         });
         dieBreadcrumb.appendChild(link);
       });
     }
 
-    var node = dieTreeRoot ? currentDieNode() : null;
+    var level = dieCurrentLevel;
 
     dieFolderGroup.innerHTML = '';
-    if (node) {
-      node.folders.forEach(function(sub){
+    if (level) {
+      var pathHere = dieCurrentPath;
+      level.folders.forEach(function(sub){
         var b = document.createElement('button');
         b.type = 'button';
         b.className = 'opt fam-opt';
         b.textContent = '📁 ' + sub.name;
         b.addEventListener('click', function(){
-          dieCurrentPath = dieCurrentPath.concat([sub.name]);
-          renderDieBrowser();
+          navigateDieTo(pathHere.concat([sub]));
         });
         dieFolderGroup.appendChild(b);
       });
     }
 
-    dieFilesLabel.style.display = (node && node.folders.length && node.files.length) ? 'block' : 'none';
+    dieFilesLabel.style.display = (level && level.folders.length && level.files.length) ? 'block' : 'none';
 
     dieNumberGroup.innerHTML = '';
-    if (node) {
-      node.files.forEach(function(name){
+    if (level) {
+      level.files.forEach(function(name){
         var b = document.createElement('button');
         b.type = 'button';
         b.className = 'opt';
@@ -1407,52 +1401,74 @@ var RFID_FAMILIES = {
     }
   }
 
-  // Loading a draft before the folder has been picked this session just
-  // echoes the saved die name back at face value (no tree to check it
-  // against yet) rather than flagging it as stale. Once the folder is
-  // actually loaded, that value gets checked for real — see loadDieFolder.
+  // Reads one folder's contents and displays it, updating the breadcrumb
+  // and path state to match. Shared by folder-button clicks, breadcrumb
+  // clicks, and the initial root load. `path` is the subfolder-step array
+  // below root (empty means the root folder itself).
+  async function navigateDieTo(path){
+    var last = path.length ? path[path.length - 1].handle : dieRootHandle;
+    dieCurrentLevel = await readDieFolderLevel(last);
+    dieCurrentPath = path;
+    renderDieBrowser();
+  }
+
+  // Loading a draft before any folder has been picked this session just
+  // echoes the saved die name back at face value (nothing to check it
+  // against yet). If a folder is already loaded, it's verified for real
+  // with a one-off recursive search — not part of normal browsing, but
+  // needed here since the value could be anywhere in the tree.
   dieNumberGroup._setVal = function(val){
     val = val || '';
-    if (dieTreeRoot && val) {
-      var path = findDiePath(dieTreeRoot, val, []);
-      if (path) dieCurrentPath = path;
-      else val = '';
-    }
     dieNumberGroup.value = val;
     dieNumberGroup.setAttribute('data-print-val', val || '—');
     renderDieBrowser();
+    if (dieRootHandle && val) {
+      searchDieFolderForFile(dieRootHandle, val, []).then(function(path){
+        if (dieNumberGroup.value !== val) return; // superseded by a newer change
+        if (path) {
+          navigateDieTo(path);
+        } else {
+          dieNumberGroup.value = '';
+          dieNumberGroup.setAttribute('data-print-val', '—');
+          renderDieBrowser();
+          toast('Die "' + val + '" was not found in this folder — please re-select.');
+        }
+      });
+    }
   };
 
-  // Reads dirHandle's tree, re-validates any already-set die value against
-  // it, and updates the UI. Shared by a fresh pick, a manual reconnect, and
-  // the silent auto-restore on page load below.
-  async function loadDieTreeFromHandle(dirHandle){
-    dieTreeRoot = await readDieTree(dirHandle);
-    dieCurrentPath = [];
-    var total = countDieFiles(dieTreeRoot);
-    dieFolderStatus.textContent = 'Loaded ' + total + ' dielines from "' + dieTreeRoot.name + '".';
+  // Loads the root folder's own contents, re-validates any already-set die
+  // value against the tree (a one-off search — see above), and updates the
+  // UI. Shared by a fresh pick, "Different Folder", and the silent
+  // auto-restore on page load below.
+  async function loadDieRootFolder(dirHandle){
+    dieRootHandle = dirHandle;
+    await navigateDieTo([]);
     dieChangeFolderBtn.style.display = 'inline-flex';
 
     var current = dieNumberGroup.value;
     if (current) {
-      var path = findDiePath(dieTreeRoot, current, []);
+      var path = await searchDieFolderForFile(dirHandle, current, []);
       if (path) {
-        dieCurrentPath = path;
+        await navigateDieTo(path);
       } else {
         dieNumberGroup.value = '';
         dieNumberGroup.setAttribute('data-print-val', '—');
+        renderDieBrowser();
         toast('Die "' + current + '" was not found in this folder — please re-select.');
       }
     }
-    renderDieBrowser();
+    var level = dieCurrentLevel;
+    dieFolderStatus.textContent = 'Loaded "' + dirHandle.name + '" (' + level.folders.length +
+      ' folder' + (level.folders.length === 1 ? '' : 's') + ', ' + level.files.length +
+      ' file' + (level.files.length === 1 ? '' : 's') + ' here).';
     updateSectionDots();
-    return total;
   }
 
   async function pickFreshDieFolder(){
     var dirHandle = await window.showDirectoryPicker({ id: 'pf-dielines' });
-    var total = await loadDieTreeFromHandle(dirHandle);
-    toast('Loaded ' + total + ' dielines');
+    await loadDieRootFolder(dirHandle);
+    toast('Loaded "' + dirHandle.name + '"');
     dieSaveHandle(dirHandle);
   }
 
@@ -1475,8 +1491,8 @@ var RFID_FAMILIES = {
         try {
           var perm = await saved.requestPermission({ mode: 'read' });
           if (perm === 'granted') {
-            var total = await loadDieTreeFromHandle(saved);
-            toast('Loaded ' + total + ' dielines');
+            await loadDieRootFolder(saved);
+            toast('Loaded "' + saved.name + '"');
             return;
           }
         } catch (e) { /* saved handle no longer valid — fall through to a fresh pick */ }
@@ -1511,7 +1527,7 @@ var RFID_FAMILIES = {
     if (!saved) return;
     try {
       var perm = await saved.queryPermission({ mode: 'read' });
-      if (perm === 'granted') await loadDieTreeFromHandle(saved);
+      if (perm === 'granted') await loadDieRootFolder(saved);
     } catch (e) { /* saved handle no longer valid; ignore */ }
   })();
 
