@@ -147,20 +147,31 @@
   #silkFrontEffectDetailsField{grid-column:1; grid-row:4;}
   #silkBackEffectDetailsField{grid-column:2; grid-row:4;}
 
-  #shrinkWrapPacksField{grid-column:1; grid-row:1;}
-  #shrinkWrapSpecialField{grid-column:1; grid-row:2;}
+  #shrinkWrapField{grid-column:1; grid-row:1;}
+  #shrinkWrapPacksField{grid-column:1; grid-row:2;}
+  #shrinkWrapSpecialField{grid-column:1; grid-row:3;}
   #sleeveField{grid-column:2; grid-row:1;}
   #sleeveTypeField{grid-column:2; grid-row:2;}
   #sleeveTypeDetailsField{grid-column:2; grid-row:3;}
   #sleeveLabelsField{grid-column:2; grid-row:4;}
+
+  #stockMaterialField{grid-column:1; grid-row:1;}
+  #stockColorField{grid-column:2; grid-row:1;}
+  #stockPaperFinishField{grid-column:1; grid-row:2;}
+  #stockPlasticTypeField{grid-column:1; grid-row:2;}
+
+  #magStripeColorField{grid-column:2; grid-row:2;}
+  #magStripeColorCustomField{grid-column:2; grid-row:3;}
 
   @media (max-width:640px){
     #frontArtField, #backArtField, #frontArtPrevField, #backArtPrevField,
     #silkFrontEffectField, #silkBackEffectField, #silkFrontTargetField, #silkBackTargetField,
     #silkFrontScreenNumberField, #silkBackScreenNumberField,
     #silkFrontEffectDetailsField, #silkBackEffectDetailsField,
-    #shrinkWrapPacksField, #shrinkWrapSpecialField,
-    #sleeveField, #sleeveTypeField, #sleeveTypeDetailsField, #sleeveLabelsField{
+    #shrinkWrapField, #shrinkWrapPacksField, #shrinkWrapSpecialField,
+    #sleeveField, #sleeveTypeField, #sleeveTypeDetailsField, #sleeveLabelsField,
+    #stockMaterialField, #stockColorField, #stockPaperFinishField, #stockPlasticTypeField,
+    #magStripeColorField, #magStripeColorCustomField{
       grid-column:1; grid-row:auto;
     }
   }
@@ -591,11 +602,18 @@
               <div class="btn-group" data-field="magEncodingType" data-label="Magnetic Encoding Type" data-options="magEncodingType"></div>
             </div>
             <div class="field">
-              <label>Tracks Encoded <span class="hint">(select all that apply)</span></label>
-              <div class="btn-group" data-field="magTracks" data-label="Tracks Encoded" data-options="magTracks" data-multi="true"></div>
+              <label>Tracks <span class="hint">(select all that apply)</span></label>
+              <div class="btn-group" data-field="magTracks" data-label="Tracks" data-options="magTracks" data-multi="true"></div>
             </div>
             <div class="field"><label>Lock Type</label><input type="text" data-field="magLockType" data-label="Mag Encoding Lock Type" placeholder="e.g. LOW-30-L"></div>
-            <div class="field"><label>Mag Stripe Color</label><input type="text" data-field="magStripeColor" data-label="Mag Stripe Color" placeholder="e.g. Brown"></div>
+            <div class="field" id="magStripeColorField">
+              <label>Mag Stripe Color</label>
+              <div class="btn-group" data-field="magStripeColor" data-label="Mag Stripe Color" data-options="magStripeColor"></div>
+            </div>
+            <div class="field" id="magStripeColorCustomField" style="display:none;">
+              <label>Mag Stripe Color — Custom Details</label>
+              <input type="text" data-field="magStripeColorCustom" data-label="Mag Stripe Color Custom Details" placeholder="Describe the custom stripe color">
+            </div>
             <div class="field span-2">
               <label>Encoding Details</label>
               <input type="text" data-field="magEncodingDetails" data-label="Magnetic Encoding Details" placeholder="Track data format, facility code, custom notes">
@@ -609,8 +627,19 @@
         <div class="head"><div class="ic c6">📄</div><div><h2>Stock &amp; Substrate</h2><p>Material and color of the substrate being printed on.</p></div></div>
         <div class="body">
           <div class="grid">
-            <div class="field"><label>Stock</label><input type="text" data-field="stock" data-label="Stock"></div>
-            <div class="field"><label>Stock Color</label><input type="text" data-field="stockColor" data-label="Stock Color"></div>
+            <div class="field" id="stockMaterialField">
+              <label>Material</label>
+              <div class="btn-group" data-field="stockMaterial" data-label="Material" data-options="stockMaterial"></div>
+            </div>
+            <div class="field" id="stockColorField"><label>Stock Color</label><input type="text" data-field="stockColor" data-label="Stock Color"></div>
+            <div class="field" id="stockPaperFinishField" style="display:none;">
+              <label>Paper Finish</label>
+              <div class="btn-group" data-field="stockPaperFinish" data-label="Paper Finish" data-options="stockPaperFinish"></div>
+            </div>
+            <div class="field" id="stockPlasticTypeField" style="display:none;">
+              <label>Plastic Type</label>
+              <input type="text" data-field="stockPlasticType" data-label="Plastic Type" readonly>
+            </div>
           </div>
         </div>
       </section>
@@ -689,24 +718,38 @@
         <div class="body">
           <div class="grid">
             <div class="field"><label>Hole Punch</label><div class="yn" data-field="holePunch" data-label="Hole Punch"><button type="button" class="yes">Yes</button></div></div>
-            <div class="field" id="holePunchDetailsField" style="display:none;"><label>Hole Punch — Details</label><input type="text" data-field="holePunchDetails" data-label="Hole Punch Details" placeholder="Location, size, quantity"></div>
+          </div>
+          <div id="holePunchDetailsField" style="display:none; margin-top:16px;">
+            <div class="grid cols-3">
+              <div class="field"><label>Hole Type</label><div class="btn-group" data-field="holeType" data-label="Hole Type" data-options="holeType"></div></div>
+              <div class="field"><label>Orientation</label><div class="btn-group" data-field="holeOrientation" data-label="Orientation" data-options="holeOrientation"></div></div>
+              <div class="field"><label>Offset</label><div class="yn" data-field="holeOffset" data-label="Offset"><button type="button" class="yes">Yes</button></div></div>
+            </div>
+            <div class="grid" style="margin-top:16px;">
+              <div class="field"><label>Location</label><div class="btn-group" data-field="holeEdge" data-label="Location" data-options="holeEdge"></div></div>
+              <div class="field" id="holePositionField" style="display:none;"><label>Position</label><div class="btn-group" data-field="holePosition" data-label="Position" data-options="holePosition"></div></div>
+            </div>
           </div>
           <div class="grid" style="margin-top:16px;">
-            <div class="field" id="shrinkWrapPacksField">
-              <label>Shrink Wrap Packs</label>
-              <div class="btn-group" data-field="shrinkWrapPacks" data-label="Shrink Wrap Packs" data-options="shrinkWrapPacks"></div>
+            <div class="field" id="shrinkWrapField">
+              <label>Shrink Wrap</label>
+              <div class="yn" data-field="shrinkWrap" data-label="Shrink Wrap"><button type="button" class="yes">Yes</button></div>
             </div>
             <div class="field" id="sleeveField">
               <label>Sleeve Qty</label>
               <div class="btn-group" data-field="sleeve" data-label="Sleeve Qty" data-options="sleeveQty"></div>
             </div>
-            <div class="field" id="shrinkWrapSpecialField" style="display:none;">
-              <label>Shrink Wrap — Special Details</label>
-              <input type="text" data-field="shrinkWrapSpecialDetails" data-label="Shrink Wrap Special Details" placeholder="Specify pack quantity">
+            <div class="field" id="shrinkWrapPacksField" style="display:none;">
+              <label>Shrink Wrap Packs</label>
+              <div class="btn-group" data-field="shrinkWrapPacks" data-label="Shrink Wrap Packs" data-options="shrinkWrapPacks"></div>
             </div>
             <div class="field" id="sleeveTypeField">
               <label>Sleeve Type</label>
               <div class="btn-group" data-field="sleeveType" data-label="Sleeve Type" data-options="sleeveType"></div>
+            </div>
+            <div class="field" id="shrinkWrapSpecialField" style="display:none;">
+              <label>Shrink Wrap — Special Details</label>
+              <input type="text" data-field="shrinkWrapSpecialDetails" data-label="Shrink Wrap Special Details" placeholder="Specify pack quantity">
             </div>
             <div class="field" id="sleeveTypeDetailsField" style="display:none;">
               <label>Sleeve — Customer Specific Details</label>
@@ -1001,10 +1044,17 @@ var DROPDOWN_OPTIONS = {
   silkTarget:        ["Archive", "New"],
   magEncodingType:   ["Hi-Co", "Mid-Co", "Lo-Co"],
   magTracks:         ["Track 1", "Track 2", "Track 3"],
+  magStripeColor:    ["Brown", "Black", "Custom"],
   shrinkWrapPacks:   ["10", "25", "50", "100", "Special"],
-  sleeveQty:         ["10", "25", "50", "100", "250", "500"],
-  sleeveType:        ["Blank", "PLI", "Customer Specific"],
-  paymentTerms:      ["Net 30", "Credit Card", "Other"]
+  sleeveQty:         ["10", "25", "50", "100", "150", "250", "500"],
+  sleeveType:        ["Blank – 11081", "Tech – 11147", "PLI – 11080", "P-tech – 12275", "Customer Specific"],
+  paymentTerms:      ["Net 30", "Credit Card", "Other"],
+  stockMaterial:     ["Paper", "Plastic"],
+  stockPaperFinish:  ["Uncoated", "Coated"],
+  holeType:          ["Hole", "Hang Tag"],
+  holeOrientation:   ["Landscape", "Portrait"],
+  holeEdge:          ["Top", "Bottom"],
+  holePosition:      ["Left", "Right", "Center"]
 };
 
 /* RFID Inlay Type is a two-step picker: pick a family button, then a row of
@@ -1037,11 +1087,11 @@ var RFID_FAMILIES = {
     'sec-art':      ['frontArt','backArt','frontArtPrevRef','backArtPrevRef'],
     'sec-tooling':  ['dieNumber'],
     'sec-rfid':     ['rfidInlayType','vingEncoding','uidRead','returnFile','lockSystem','lockSystemTech'],
-    'sec-magenc':   ['magEncodingType','magTracks','magLockType','magStripeColor','magEncodingDetails'],
-    'sec-stock':    ['stock','stockColor'],
+    'sec-magenc':   ['magEncodingType','magTracks','magLockType','magStripeColor','magStripeColorCustom','magEncodingDetails'],
+    'sec-stock':    ['stockMaterial','stockColor','stockPaperFinish','stockPlasticType'],
     'sec-press':    ['pressTarget','pressFrontFinish','pressBackFinish','frontColor','backColor','bleeds'],
     'sec-silk':     ['silkFrontEffect','silkFrontTarget','silkFrontScreenNumber','silkFrontEffectDetails','silkBackEffect','silkBackTarget','silkBackScreenNumber','silkBackEffectDetails'],
-    'sec-finish':   ['holePunch','holePunchDetails','shrinkWrapPacks','shrinkWrapSpecialDetails','sleeve','sleeveType','sleeveTypeDetails','sleeveLabels'],
+    'sec-finish':   ['holePunch','holeType','holeOrientation','holeOffset','holeEdge','holePosition','shrinkWrap','shrinkWrapPacks','shrinkWrapSpecialDetails','sleeve','sleeveType','sleeveTypeDetails','sleeveLabels'],
     'sec-ship':     ['overageOK','shipEarly','undersOK'],
     'sec-recipients': ['recipients'],
     'sec-notes':    ['instructions']
@@ -1534,12 +1584,16 @@ var RFID_FAMILIES = {
   // ---- Conditional reveals ----
   var holeYN = document.querySelector('.yn[data-field="holePunch"]');
   var holeField = document.getElementById('holePunchDetailsField');
+  var holeEdgeGroup = document.querySelector('.btn-group[data-field="holeEdge"]');
+  var holePositionField = document.getElementById('holePositionField');
   var proofOptionsGroup = document.querySelector('.btn-group[data-field="proofOptions"]');
   var proofCustomField = document.getElementById('proofCustomField');
   var silkFrontTargetGroup = document.querySelector('.btn-group[data-field="silkFrontTarget"]');
   var silkFrontScreenNumberField = document.getElementById('silkFrontScreenNumberField');
   var silkBackTargetGroup = document.querySelector('.btn-group[data-field="silkBackTarget"]');
   var silkBackScreenNumberField = document.getElementById('silkBackScreenNumberField');
+  var shrinkWrapYN = document.querySelector('.yn[data-field="shrinkWrap"]');
+  var shrinkWrapPacksField = document.getElementById('shrinkWrapPacksField');
   var shrinkWrapPacksGroup = document.querySelector('.btn-group[data-field="shrinkWrapPacks"]');
   var shrinkWrapSpecialField = document.getElementById('shrinkWrapSpecialField');
   var frontArtGroup = document.querySelector('.btn-group[data-field="frontArt"]');
@@ -1548,16 +1602,38 @@ var RFID_FAMILIES = {
   var backArtPrevField = document.getElementById('backArtPrevField');
   var sleeveTypeGroup = document.querySelector('.btn-group[data-field="sleeveType"]');
   var sleeveTypeDetailsField = document.getElementById('sleeveTypeDetailsField');
+  var stockMaterialGroup = document.querySelector('.btn-group[data-field="stockMaterial"]');
+  var stockPaperFinishField = document.getElementById('stockPaperFinishField');
+  var stockPaperFinishGroup = document.querySelector('.btn-group[data-field="stockPaperFinish"]');
+  var stockPlasticTypeField = document.getElementById('stockPlasticTypeField');
+  var stockPlasticTypeInput = document.querySelector('[data-field="stockPlasticType"]');
+  var magStripeColorGroup = document.querySelector('.btn-group[data-field="magStripeColor"]');
+  var magStripeColorCustomField = document.getElementById('magStripeColorCustomField');
 
   function onFieldChange(field){
-    if (field === 'holePunch') holeField.style.display = (holeYN.value === 'Yes') ? 'flex' : 'none';
+    if (field === 'holePunch') holeField.style.display = (holeYN.value === 'Yes') ? 'block' : 'none';
+    if (field === 'holeEdge') holePositionField.style.display = holeEdgeGroup.value ? 'flex' : 'none';
     if (field === 'proofOptions') proofCustomField.style.display = (proofOptionsGroup.value === 'Customer Specific') ? 'flex' : 'none';
     if (field === 'silkFrontTarget') silkFrontScreenNumberField.style.display = (silkFrontTargetGroup.value === 'Archive') ? 'flex' : 'none';
     if (field === 'silkBackTarget') silkBackScreenNumberField.style.display = (silkBackTargetGroup.value === 'Archive') ? 'flex' : 'none';
-    if (field === 'shrinkWrapPacks') shrinkWrapSpecialField.style.display = (shrinkWrapPacksGroup.value === 'Special') ? 'flex' : 'none';
+    if (field === 'shrinkWrap') {
+      var wrapOn = shrinkWrapYN.value === 'Yes';
+      shrinkWrapPacksField.style.display = wrapOn ? 'flex' : 'none';
+      if (!wrapOn) shrinkWrapSpecialField.style.display = 'none';
+    }
+    if (field === 'shrinkWrapPacks') shrinkWrapSpecialField.style.display = (shrinkWrapYN.value === 'Yes' && shrinkWrapPacksGroup.value === 'Special') ? 'flex' : 'none';
     if (field === 'frontArt') frontArtPrevField.style.display = (frontArtGroup.value === 'Previous') ? 'flex' : 'none';
     if (field === 'backArt') backArtPrevField.style.display = (backArtGroup.value === 'Previous') ? 'flex' : 'none';
     if (field === 'sleeveType') sleeveTypeDetailsField.style.display = (sleeveTypeGroup.value === 'Customer Specific') ? 'flex' : 'none';
+    if (field === 'stockMaterial') {
+      var isPaper = stockMaterialGroup.value === 'Paper';
+      var isPlastic = stockMaterialGroup.value === 'Plastic';
+      stockPaperFinishField.style.display = isPaper ? 'flex' : 'none';
+      stockPlasticTypeField.style.display = isPlastic ? 'flex' : 'none';
+      stockPlasticTypeInput.value = isPlastic ? 'PVC' : '';
+      if (!isPaper && stockPaperFinishGroup._setVal) stockPaperFinishGroup._setVal('');
+    }
+    if (field === 'magStripeColor') magStripeColorCustomField.style.display = (magStripeColorGroup.value === 'Custom') ? 'flex' : 'none';
     updateSectionDots();
   }
   document.querySelectorAll('input[data-field], textarea[data-field]').forEach(function(el){
@@ -1630,13 +1706,17 @@ var RFID_FAMILIES = {
       }
     });
     onFieldChange('holePunch');
+    onFieldChange('holeEdge');
     onFieldChange('proofOptions');
     onFieldChange('silkFrontTarget');
     onFieldChange('silkBackTarget');
+    onFieldChange('shrinkWrap');
     onFieldChange('shrinkWrapPacks');
     onFieldChange('frontArt');
     onFieldChange('backArt');
     onFieldChange('sleeveType');
+    onFieldChange('stockMaterial');
+    onFieldChange('magStripeColor');
     updateSectionDots();
     return mismatches;
   }
@@ -1733,13 +1813,17 @@ var RFID_FAMILIES = {
     hideDraftWarning();
     allFieldEls().forEach(function(el){ setValue(el, ''); });
     onFieldChange('holePunch');
+    onFieldChange('holeEdge');
     onFieldChange('proofOptions');
     onFieldChange('silkFrontTarget');
     onFieldChange('silkBackTarget');
+    onFieldChange('shrinkWrap');
     onFieldChange('shrinkWrapPacks');
     onFieldChange('frontArt');
     onFieldChange('backArt');
     onFieldChange('sleeveType');
+    onFieldChange('stockMaterial');
+    onFieldChange('magStripeColor');
     resetSectionStates();
     toast('Form cleared');
   });
