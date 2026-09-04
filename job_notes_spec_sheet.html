@@ -522,14 +522,16 @@
             <div class="field span-2">
               <div class="label-row">
                 <label>Die #</label>
-                <button type="button" class="load-btn" id="btnLoadDielines">🗂️ Load Dielines</button>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button type="button" class="load-btn" id="btnLoadDielines">🗂️ Load Dielines</button>
+                  <button type="button" class="load-btn" id="btnChangeDielinesFolder" style="display:none;">🔁 Different Folder</button>
+                </div>
               </div>
               <div class="die-breadcrumb" id="dieBreadcrumb" style="display:none;"></div>
               <div class="btn-group" id="dieFolderGroup"></div>
               <div class="hint" id="dieFilesLabel" style="display:none; margin:10px 0 4px;">Files in this folder:</div>
               <div class="btn-group" id="dieNumberGroup" data-field="dieNumber" data-label="Die #"></div>
               <span class="hint" id="dieFolderStatus">No folder loaded yet — click "Load Dielines" and pick the Pocket Folders dieline folder.</span>
-              <div><button type="button" class="load-btn" id="btnReconnectDielines" style="display:none; margin-top:8px;">🔄 Reconnect Dielines Folder</button></div>
             </div>
           </div>
         </div>
@@ -1231,7 +1233,6 @@ var RFID_FAMILIES = {
   var dieBreadcrumb = document.getElementById('dieBreadcrumb');
   var dieFilesLabel = document.getElementById('dieFilesLabel');
   var dieFolderStatus = document.getElementById('dieFolderStatus');
-  var dieReconnectBtn = document.getElementById('btnReconnectDielines');
   dieNumberGroup.value = '';
   var dieTreeRoot = null;   // {name, files:[...], folders:[{...}, ...]} once loaded
   var dieCurrentPath = [];  // folder names from root to the folder being viewed
@@ -1430,7 +1431,7 @@ var RFID_FAMILIES = {
     dieCurrentPath = [];
     var total = countDieFiles(dieTreeRoot);
     dieFolderStatus.textContent = 'Loaded ' + total + ' dielines from "' + dieTreeRoot.name + '".';
-    dieReconnectBtn.style.display = 'none';
+    dieChangeFolderBtn.style.display = 'inline-flex';
 
     var current = dieNumberGroup.value;
     if (current) {
@@ -1448,16 +1449,39 @@ var RFID_FAMILIES = {
     return total;
   }
 
+  async function pickFreshDieFolder(){
+    var dirHandle = await window.showDirectoryPicker({ id: 'pf-dielines' });
+    var total = await loadDieTreeFromHandle(dirHandle);
+    toast('Loaded ' + total + ' dielines');
+    dieSaveHandle(dirHandle);
+  }
+
+  // "Load Dielines" tries the previously-saved folder first — silently, or
+  // via a quick permission prompt (a click already counts as the required
+  // user gesture, so no folder-browse dialog is needed for that) — and
+  // only falls back to a fresh picker if there's nothing usable saved yet.
+  // This is what actually fixes the "always opens to Documents" problem:
+  // Chrome's own built-in "remember this folder" (the `id` option below)
+  // doesn't reliably persist for a page opened as a local file, so relying
+  // on it alone meant every click reopened wherever Chrome felt like.
   async function loadDieFolder(){
     if (!window.showDirectoryPicker) {
       toast("This browser can't open folders directly — try Chrome or Edge.");
       return;
     }
     try {
-      var dirHandle = await window.showDirectoryPicker({ id: 'pf-dielines' });
-      var total = await loadDieTreeFromHandle(dirHandle);
-      toast('Loaded ' + total + ' dielines');
-      dieSaveHandle(dirHandle);
+      var saved = await dieLoadSavedHandle();
+      if (saved) {
+        try {
+          var perm = await saved.requestPermission({ mode: 'read' });
+          if (perm === 'granted') {
+            var total = await loadDieTreeFromHandle(saved);
+            toast('Loaded ' + total + ' dielines');
+            return;
+          }
+        } catch (e) { /* saved handle no longer valid — fall through to a fresh pick */ }
+      }
+      await pickFreshDieFolder();
     } catch (err) {
       if (err && err.name === 'AbortError') return;
       toast('Could not read that folder.');
@@ -1465,38 +1489,29 @@ var RFID_FAMILIES = {
   }
   document.getElementById('btnLoadDielines').addEventListener('click', loadDieFolder);
 
-  dieReconnectBtn.addEventListener('click', async function(){
-    var saved = await dieLoadSavedHandle();
-    if (!saved) { dieReconnectBtn.style.display = 'none'; return; }
+  // Always opens a fresh picker — for switching to a different folder once
+  // one has already been loaded, bypassing the saved-handle reuse above.
+  var dieChangeFolderBtn = document.getElementById('btnChangeDielinesFolder');
+  dieChangeFolderBtn.addEventListener('click', async function(){
+    if (!window.showDirectoryPicker) return;
     try {
-      var perm = await saved.requestPermission({ mode: 'read' });
-      if (perm === 'granted') {
-        var total = await loadDieTreeFromHandle(saved);
-        toast('Reconnected — loaded ' + total + ' dielines');
-      } else {
-        toast('Permission was not granted for that folder.');
-      }
-    } catch (e) {
-      toast('Could not reconnect to that folder — try Load Dielines instead.');
+      await pickFreshDieFolder();
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      toast('Could not read that folder.');
     }
   });
 
   // On page load, try to silently pick back up wherever was loaded last
-  // time — no dialog at all if the browser still considers permission
-  // granted; otherwise offer the one-click Reconnect button instead of
-  // making someone re-browse to the folder from scratch.
+  // time — no dialog and no click at all if the browser still considers
+  // permission granted.
   (async function autoRestoreDieFolder(){
     if (!window.showDirectoryPicker) return;
     var saved = await dieLoadSavedHandle();
     if (!saved) return;
     try {
       var perm = await saved.queryPermission({ mode: 'read' });
-      if (perm === 'granted') {
-        await loadDieTreeFromHandle(saved);
-      } else {
-        dieReconnectBtn.style.display = 'inline-flex';
-        dieFolderStatus.textContent = 'Previously loaded "' + saved.name + '" — click Reconnect to use it again without browsing.';
-      }
+      if (perm === 'granted') await loadDieTreeFromHandle(saved);
     } catch (e) { /* saved handle no longer valid; ignore */ }
   })();
 
