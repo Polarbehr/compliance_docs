@@ -134,8 +134,15 @@
      slide into the wrong (front/back) side of the grid. */
   #silkFrontScreenNumberField{grid-column:1;}
   #silkBackScreenNumberField{grid-column:2;}
+  #shrinkWrapPacksField{grid-column:1; grid-row:1;}
+  #shrinkWrapSpecialField{grid-column:1; grid-row:2;}
+  #sleeveField{grid-column:2; grid-row:1;}
+  #sleeveLabelsField{grid-column:2; grid-row:2;}
   @media (max-width:640px){
-    #silkFrontScreenNumberField, #silkBackScreenNumberField{grid-column:1;}
+    #silkFrontScreenNumberField, #silkBackScreenNumberField,
+    #shrinkWrapPacksField, #shrinkWrapSpecialField, #sleeveField, #sleeveLabelsField{
+      grid-column:1; grid-row:auto;
+    }
   }
   .field label{font-size:12.5px;font-weight:700;color:#3a3530;display:flex;justify-content:space-between;}
   .field label .req{color:var(--magenta);font-weight:800;}
@@ -607,19 +614,19 @@
             <div class="field" id="holePunchDetailsField" style="display:none;"><label>Hole Punch — Details</label><input type="text" data-field="holePunchDetails" data-label="Hole Punch Details" placeholder="Location, size, quantity"></div>
           </div>
           <div class="grid" style="margin-top:16px;">
-            <div class="field">
+            <div class="field" id="shrinkWrapPacksField">
               <label>Shrink Wrap Packs</label>
               <div class="btn-group" data-field="shrinkWrapPacks" data-label="Shrink Wrap Packs" data-options="shrinkWrapPacks"></div>
+            </div>
+            <div class="field" id="sleeveField">
+              <label>Sleeve</label>
+              <div class="btn-group" data-field="sleeve" data-label="Sleeve" data-options="sleeveQty"></div>
             </div>
             <div class="field" id="shrinkWrapSpecialField" style="display:none;">
               <label>Shrink Wrap — Special Details</label>
               <input type="text" data-field="shrinkWrapSpecialDetails" data-label="Shrink Wrap Special Details" placeholder="Specify pack quantity">
             </div>
-            <div class="field">
-              <label>Sleeve</label>
-              <div class="btn-group" data-field="sleeve" data-label="Sleeve" data-options="sleeveQty"></div>
-            </div>
-            <div class="field"><label>Sleeve Labels</label><input type="text" data-field="sleeveLabels" data-label="Sleeve Labels"></div>
+            <div class="field" id="sleeveLabelsField"><label>Sleeve Labels</label><input type="text" data-field="sleeveLabels" data-label="Sleeve Labels"></div>
           </div>
         </div>
       </section>
