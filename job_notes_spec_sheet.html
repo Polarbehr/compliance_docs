@@ -1326,6 +1326,10 @@ var RFID_FAMILIES = {
   function padCol(text, width){
     return text.length >= width ? text + '  ' : text + ' '.repeat(width - text.length);
   }
+  // Width of one side of the two-column section layout below. Shared with
+  // fieldLines() so a long field value wraps before it would ever bleed
+  // into whatever content ends up next to it in the other column.
+  var COL_WIDTH = 48;
   // Word-wraps free text to a width that fits comfortably on an A4 page in a
   // monospace font, preserving any paragraph breaks the user typed.
   var A4_WRAP_WIDTH = 90;
@@ -1351,16 +1355,28 @@ var RFID_FAMILIES = {
     if (el.getAttribute('data-field') === 'bleeds') return 'None';
     return '—';
   }
+  // Renders one field as either a single "Label: Value" line, or — when
+  // that line would run long enough to bleed into whatever ends up next to
+  // it in the other column — "Label:" followed by the value word-wrapped
+  // and indented on its own lines instead.
+  var FIELD_WRAP_INDENT = '      ';
+  function fieldLines(el){
+    var label = el.getAttribute('data-label');
+    var val = getValue(el).trim();
+    var display = val || fallbackFor(el);
+    var oneLine = label + ': ' + display;
+    if (oneLine.length <= COL_WIDTH - 2) return [oneLine];
+    var wrapped = wrapText(display, COL_WIDTH - FIELD_WRAP_INDENT.length);
+    return [label + ':'].concat(wrapped.map(function(l){ return FIELD_WRAP_INDENT + l; }));
+  }
   // Renders one section as a self-contained block of lines (header + one
-  // "Label: Value" line per field) — never split apart once built.
+  // or more lines per field) — never split apart once built.
   function sectionBlockLines(card){
     var fields = card.querySelectorAll('[data-field]');
     var title = card.querySelector('h2').textContent;
     var lines = ['== ' + title.toUpperCase() + ' =='];
     Array.prototype.forEach.call(fields, function(el){
-      var label = el.getAttribute('data-label');
-      var val = getValue(el).trim();
-      lines.push(label + ': ' + (val || fallbackFor(el)));
+      lines = lines.concat(fieldLines(el));
     });
     return lines;
   }
@@ -1399,7 +1415,6 @@ var RFID_FAMILIES = {
       }
     });
 
-    var COL_WIDTH = 48;
     var rows = [];
     var rowCount = Math.max(colA.length, colB.length);
     for (var i = 0; i < rowCount; i++) {
