@@ -1,7 +1,7 @@
 Option Explicit
 
 ' =============================================================================
-' PLI PERSO WORKBOOK -- Module1 (v3.11, 2026-09-03)
+' PLI PERSO WORKBOOK -- Module1 (v3.13, 2026-09-03)
 '
 ' The version is ALSO held in the MODULE_VERSION constant below and printed at
 ' the end of every Update Data run, so the build a workbook is actually running
@@ -13,16 +13,33 @@ Option Explicit
 '   ---------------------------------------------------------------------
 '   REVISION HISTORY
 '   ---------------------------------------------------------------------
+'   v3.13  2026-09-03
+'       * v3.11's spacer-row checkbox fix did not actually work (confirmed
+'         by the user) -- ClearFormats does not remove whatever
+'         PasteSpecial xlPasteFormats propagates for this workbook's
+'         checkbox, unlike Press's CellControl.SetCheckbox-created ones,
+'         which ClearFormats does remove. Fixed properly: rather than try
+'         to strip the checkbox back off, each spacer row's Rdy cell now
+'         gets its format overwritten by cloning from that SAME row's
+'         Machine cell (column 8), which is already correctly plain black
+'         with no checkbox -- the same paste-cloning technique this
+'         workbook already uses everywhere else, applied to a source that
+'         is guaranteed checkbox-free instead of to a removal API that
+'         did not actually reach it.
+'   v3.12  2026-09-03
+'       * Fixed: stray dates the user spotted sitting in K1:K5. The
+'         column-K purge block (see BuildTracieTab) only ever cleared
+'         FORMATTING there (conditional-format rules, fills, borders),
+'         never CONTENTS, even though K is documented as holding no data
+'         at all in this design -- nothing had ever cleared literal
+'         values left over from an earlier layout. Added
+'         Columns(11).ClearContents. Safe across the whole column, every
+'         row, unlike the capacity zone's own row-1-5 strip starting at
+'         L, which stays deliberately untouched as user territory.
 '   v3.11  2026-09-03
-'       * Fixed: black spacer rows between machine groups showed an empty
-'         Rdy checkbox. EnsureCheckboxFormats stamps the checkbox control
-'         across the whole contiguous I2:I<last> span before the row loop
-'         even runs, which includes every spacer row -- nothing had ever
-'         stripped it back off them. The row loop now collects each
-'         spacer row as it paints it, and right after the loop, each
-'         one's Rdy cell is ClearFormats'd (the only way to remove a cell
-'         control -- same finding as Press's ApplyRemoveCheckboxes) and
-'         its black fill reapplied, since ClearFormats wipes that too.
+'       * First attempt at the checkbox fix in v3.13 -- collected each
+'         spacer row during the write loop and ClearFormats'd its Rdy
+'         cell afterward. Did not remove the checkbox; see v3.13.
 '   v3.10  2026-09-03
 '       * Cards removed (not needed any more, per the user). Snapshot/
 '         restore, checkbox-format cloning, headers, and the hide-blank-
@@ -260,8 +277,10 @@ Private Const STALE_HUB_HOURS As Double = 12#
 '   v3.9  Ship Date and To Perso swapped back (A/B), nothing else moved
 '   v3.10 Cards removed; Week Start hidden, not removed; capacity table
 '         and everything after Rdy shifted one column left
-'   v3.11 Fixed: spacer rows no longer show an empty Rdy checkbox
-Private Const MODULE_VERSION As String = "v3.11"
+'   v3.11 First (unsuccessful) attempt at the spacer-row checkbox fix
+'   v3.12 Fixed: stray dates in K1:K5 -- column K purge now clears content
+'   v3.13 Fixed properly: spacer rows no longer show a Rdy checkbox
+Private Const MODULE_VERSION As String = "v3.13"
 
 ' -----------------------------------------------------------------------------
 ' UPDATE DATA BUTTON -- second caption line and state colour (v3).
@@ -903,8 +922,18 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
     ' formatting rules inherited from the original workbook (machine-color
     ' rules on K121:K351 pointing at long-gone row offsets -- the blue
     ' cells the user spotted at K121:K123, back when this really was
-    ' column K). It holds no data in this design; purge its rules and
-    ' fills every run.
+    ' column K). It holds no data in this design; purge its rules, fills
+    ' AND CONTENTS every run.
+    '
+    ' 2026-09.03: the ClearContents line is new -- everything else here
+    ' only ever purged FORMATTING, never VALUES, so stale dates the user
+    ' spotted sitting in K1:K5 (left over from some earlier layout, before
+    ' K was this run's dedicated no-data buffer) had nothing that would
+    ' ever clear them. This is safe across the whole column, unlike the
+    ' capacity zone's own row-1-5 strip starting at L -- that one is
+    ' deliberately left as user territory (see EnsureCapacityTable); K
+    ' never was, by design, at any row.
+    ws.Columns(11).ClearContents
     ws.Columns(11).FormatConditions.Delete
     ws.Columns(11).Interior.Pattern = xlNone
     ws.Columns(11).Borders.LineStyle = xlNone
@@ -1026,18 +1055,30 @@ Private Function BuildTracieTab(ByRef rawData As Variant, ByRef roster As Varian
         outRow = outRow + 1
     Next i
 
-    ' Strip the checkbox control back off every spacer row's Rdy cell.
-    ' ClearFormats is the only way to take a cell control off (same finding
-    ' as Press's ApplyRemoveCheckboxes -- there is no RemoveCheckbox
-    ' counterpart), which also wipes the black fill that cell got as part
-    ' of the whole-row spacer fill above, so it's reapplied right after.
+    ' Strip the checkbox back off every spacer row's Rdy cell.
+    '
+    ' 2026-09.03: ClearFormats (Press's proven fix for its own Remove
+    ' checkbox column, via CellControl.SetCheckbox) turned out NOT to
+    ' remove this workbook's checkbox -- Perso never calls CellControl at
+    ' all; every checkbox here, including the template at I2, was created
+    ' by hand in the Excel UI and only ever PROPAGATED by VBA via
+    ' PasteSpecial xlPasteFormats (see EnsureCheckboxFormats). ClearFormats
+    ' left it in place, confirmed by the user after the first attempt.
+    '
+    ' Fixed properly by not trying to SUBTRACT the checkbox at all: instead
+    ' each spacer row's OWN Machine cell (column 8) already has the exact
+    ' right look -- plain black fill, no checkbox, never had one -- because
+    ' it sits inside the same whole-row fill above. Cloning ITS format onto
+    ' the Rdy cell replaces whatever the checkbox paste left behind with a
+    ' known-good format, the same paste-cloning mechanism this workbook
+    ' already relies on everywhere else, rather than a removal API that
+    ' does not actually reach whatever PasteSpecial set.
     Dim sr As Variant
     For Each sr In sepRows
-        With ws.Cells(CLng(sr), 9)
-            .ClearFormats
-            .Interior.Color = RGB(0, 0, 0)
-        End With
+        ws.Cells(CLng(sr), 8).Copy
+        ws.Cells(CLng(sr), 9).PasteSpecial xlPasteFormats
     Next sr
+    Application.CutCopyMode = False
 
     Dim lastRow As Long: lastRow = outRow - 1
 
