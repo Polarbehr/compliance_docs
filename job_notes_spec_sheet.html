@@ -132,9 +132,10 @@
   @media (max-width:640px){.field.span-2{grid-column:span 1;}}
   .field label{font-size:12.5px;font-weight:700;color:#3a3530;display:flex;justify-content:space-between;}
   .field label .req{color:var(--magenta);font-weight:800;}
-  .field-row-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
-  .field-row-header > label{margin:0;padding-top:6px;}
-  .inline-yn-stack{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .rfid-top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .rfid-left-col{display:flex;flex-direction:column;gap:10px;flex:1;min-width:260px;}
+  .rfid-left-col > label{margin:0;}
+  .inline-yn-stack{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none;}
   .inline-yn{display:flex;align-items:center;gap:10px;}
   .inline-yn label{font-size:12.5px;font-weight:700;color:#3a3530;margin:0;white-space:nowrap;}
   .field input[type="text"],
@@ -152,13 +153,16 @@
 
   /* Button-group (replaces dropdowns) */
   .btn-group{display:flex;flex-wrap:wrap;gap:8px;}
-  .btn-group .opt{
+  .opt{
     padding:9px 16px; border-radius:9px; border:1.5px solid var(--line);
     background:#fffefc; font-weight:700; font-size:13px; cursor:pointer; color:var(--muted);
     transition:all .15s;
   }
-  .btn-group .opt.active{background:rgba(0,174,239,.12); border-color:var(--cyan); color:#036b96;}
-  #rfidFamilyGroup .opt.active{background:rgba(236,0,140,.10); border-color:var(--magenta); color:#a3196a;}
+  .opt.active{background:rgba(0,174,239,.12); border-color:var(--cyan); color:#036b96;}
+  .rfid-family-rows{display:flex; flex-direction:column; gap:8px;}
+  .rfid-family-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+  .rfid-family-row .fam-opt{flex:none; min-width:140px;}
+  .rfid-family-row .fam-opt.active{background:rgba(236,0,140,.10); border-color:var(--magenta); color:#a3196a;}
 
   /* Single Yes toggle (blank/off = No) */
   .yn{display:inline-flex;}
@@ -168,13 +172,6 @@
     transition:all .15s;
   }
   .yn button.yes.active{background:rgba(18,183,106,.12); border-color:var(--good); color:var(--good);}
-
-  .subpanel{
-    margin-top:14px; padding:14px; border-radius:10px;
-    background:#fbf7ef; border:1px dashed #e3c98a;
-    display:none;
-  }
-  .subpanel.open{display:block;}
 
   /* ---------- Footer action bar ---------- */
   .actionbar{
@@ -235,7 +232,7 @@
     .card{box-shadow:none; border:1px solid #ccc; break-inside:avoid; margin-bottom:10px;}
     .layout{display:block;}
     .field input,.field textarea{border:1px solid #999; background:#fff;}
-    .yn button, .btn-group .opt, #rfidFamilyGroup{display:none;}
+    .yn button, .opt, .rfid-family-rows{display:none;}
     .yn::after{content:attr(data-print-val); font-weight:700;}
     .btn-group[data-field]::after{content:attr(data-print-val); font-weight:700;}
   }
@@ -386,7 +383,7 @@
         <div class="body">
           <div class="grid cols-3">
             <div class="field"><label>Customer Name</label><input type="text" data-field="customerName" data-label="Customer Name" placeholder="e.g. Acme Beverage Co."></div>
-            <div class="field"><label>Job / PO Number</label><input type="text" data-field="jobNumber" data-label="Job / PO Number" placeholder="e.g. PO-48213"></div>
+            <div class="field"><label>Job Number</label><input type="text" data-field="jobNumber" data-label="Job Number" placeholder="e.g. PO-48213"></div>
             <div class="field"><label>Sales Rep</label><input type="text" data-field="salesRep" data-label="Sales Rep" placeholder="e.g. J. Rivera"></div>
           </div>
         </div>
@@ -448,11 +445,9 @@
 
       <!-- TOOLING -->
       <section class="card" id="sec-tooling">
-        <div class="head"><div class="ic c5">🔩</div><div><h2>Tooling &amp; Die</h2><p>Mechanical specs for the die and lock system.</p></div></div>
+        <div class="head"><div class="ic c5">🔩</div><div><h2>Tooling &amp; Die</h2><p>Mechanical specs for the die.</p></div></div>
         <div class="body">
           <div class="grid cols-3">
-            <div class="field"><label>Lock System</label><input type="text" data-field="lockSystem" data-label="Lock System"></div>
-            <div class="field"><label>Lock System Tech</label><input type="text" data-field="lockSystemTech" data-label="Lock System Tech"></div>
             <div class="field"><label>Die #</label><input type="text" data-field="dieNumber" data-label="Die #"></div>
             <div class="field"><label>Size</label><input type="text" data-field="size" data-label="Size" placeholder="e.g. 12oz, 4.5 x 8 in"></div>
             <div class="field"><label>Thickness</label><input type="text" data-field="thickness" data-label="Thickness" placeholder="e.g. .014&quot;"></div>
@@ -472,12 +467,16 @@
             <path d="M44.05 14.80 A21 21 0 0 1 44.05 49.20" stroke="#FFD500" stroke-width="4.4" stroke-linecap="round"/>
             <path d="M19.95 14.80 A21 21 0 0 0 19.95 49.20" stroke="#FFD500" stroke-width="4.4" stroke-linecap="round"/>
           </svg>
-        </div><div><h2>RFID Inlay</h2><p>Pick a chip family, then the specific type. Ving Encoding, UID Read, Return File: leave off = No.</p></div></div>
+        </div><div><h2>RFID Inlay</h2><p>Pick a chip family, then the specific type, plus lock system specs. Ving Encoding, UID Read, Return File: leave off = No.</p></div></div>
         <div class="body">
           <div class="grid">
             <div class="field span-2">
-              <div class="field-row-header">
-                <label>RFID Inlay Type</label>
+              <div class="rfid-top-row">
+                <div class="rfid-left-col">
+                  <label>RFID Inlay Type</label>
+                  <div class="rfid-family-rows" id="rfidFamilyRows"></div>
+                  <div class="btn-group" id="rfidTypeGroup" data-field="rfidInlayType" data-label="RFID Inlay Type" hidden></div>
+                </div>
                 <div class="inline-yn-stack">
                   <div class="inline-yn">
                     <label>Ving Encoding</label>
@@ -493,11 +492,9 @@
                   </div>
                 </div>
               </div>
-              <div class="btn-group" id="rfidFamilyGroup"></div>
-              <div class="subpanel" id="rfidTypePanel">
-                <div class="btn-group" id="rfidTypeGroup" data-field="rfidInlayType" data-label="RFID Inlay Type"></div>
-              </div>
             </div>
+            <div class="field"><label>Lock System</label><input type="text" data-field="lockSystem" data-label="Lock System"></div>
+            <div class="field"><label>Lock System Tech</label><input type="text" data-field="lockSystemTech" data-label="Lock System Tech"></div>
           </div>
         </div>
       </section>
@@ -563,25 +560,32 @@
 
       <!-- SILK SCREEN -->
       <section class="card" id="sec-silk">
-        <div class="head"><div class="ic c7">🧵</div><div><h2>Silk Screen</h2><p>Only applies when this job requires a silk screen pass.</p></div></div>
+        <div class="head"><div class="ic c7">🧵</div><div><h2>Silk Screen</h2><p>Front and back screen effect and target. Archive needs a screen number.</p></div></div>
         <div class="body">
           <div class="grid">
-            <div class="field"><label>Silk Screen</label><div class="yn" data-field="silkScreen" data-label="Silk Screen"><button type="button" class="yes">Yes</button></div></div>
-          </div>
-          <div class="subpanel" id="silkPanel">
-            <div class="grid">
-              <div class="field">
-                <label>Silk Screen Target</label>
-                <div class="btn-group" data-field="silkScreenTarget" data-label="Silk Screen Target" data-options="silkScreenTarget"></div>
-              </div>
-              <div class="field">
-                <label>Screen Type</label>
-                <div class="btn-group" data-field="screenType" data-label="Screen Type" data-options="screenType"></div>
-              </div>
-              <div class="field span-2">
-                <label>Screen Effect — Details</label>
-                <textarea data-field="screenEffect" data-label="Screen Effect" placeholder="Describe the screen effect (e.g. spot gloss over matte, textured, metallic, etc.)"></textarea>
-              </div>
+            <div class="field">
+              <label>Front — Screen Effect <span class="hint">(select all that apply)</span></label>
+              <div class="btn-group" data-field="silkFrontEffect" data-label="Silk Screen Front Effect" data-options="silkEffect" data-multi="true"></div>
+            </div>
+            <div class="field">
+              <label>Back — Screen Effect <span class="hint">(select all that apply)</span></label>
+              <div class="btn-group" data-field="silkBackEffect" data-label="Silk Screen Back Effect" data-options="silkEffect" data-multi="true"></div>
+            </div>
+            <div class="field">
+              <label>Front — Target</label>
+              <div class="btn-group" data-field="silkFrontTarget" data-label="Silk Screen Front Target" data-options="silkTarget"></div>
+            </div>
+            <div class="field">
+              <label>Back — Target</label>
+              <div class="btn-group" data-field="silkBackTarget" data-label="Silk Screen Back Target" data-options="silkTarget"></div>
+            </div>
+            <div class="field" id="silkFrontScreenNumberField" style="display:none;">
+              <label>Front — Screen Number</label>
+              <input type="text" data-field="silkFrontScreenNumber" data-label="Silk Screen Front Screen Number" placeholder="Archive screen #">
+            </div>
+            <div class="field" id="silkBackScreenNumberField" style="display:none;">
+              <label>Back — Screen Number</label>
+              <input type="text" data-field="silkBackScreenNumber" data-label="Silk Screen Back Screen Number" placeholder="Archive screen #">
             </div>
           </div>
         </div>
@@ -596,8 +600,18 @@
             <div class="field" id="holePunchDetailsField" style="display:none;"><label>Hole Punch — Details</label><input type="text" data-field="holePunchDetails" data-label="Hole Punch Details" placeholder="Location, size, quantity"></div>
           </div>
           <div class="grid" style="margin-top:16px;">
-            <div class="field"><label>Shrink Wrap Packs</label><input type="text" data-field="shrinkWrapPacks" data-label="Shrink Wrap Packs" placeholder="e.g. 250/pack"></div>
-            <div class="field"><label>Sleeve</label><input type="text" data-field="sleeve" data-label="Sleeve"></div>
+            <div class="field">
+              <label>Shrink Wrap Packs</label>
+              <div class="btn-group" data-field="shrinkWrapPacks" data-label="Shrink Wrap Packs" data-options="shrinkWrapPacks"></div>
+            </div>
+            <div class="field" id="shrinkWrapSpecialField" style="display:none;">
+              <label>Shrink Wrap — Special Details</label>
+              <input type="text" data-field="shrinkWrapSpecialDetails" data-label="Shrink Wrap Special Details" placeholder="Specify pack quantity">
+            </div>
+            <div class="field">
+              <label>Sleeve</label>
+              <div class="btn-group" data-field="sleeve" data-label="Sleeve" data-options="sleeveQty"></div>
+            </div>
             <div class="field"><label>Sleeve Labels</label><input type="text" data-field="sleeveLabels" data-label="Sleeve Labels"></div>
           </div>
         </div>
@@ -872,10 +886,12 @@ var DROPDOWN_OPTIONS = {
   pressTarget:       ["Internal Proof", "Default Color Settings", "Archive", "PMS", "Hard Copy Proof", "Drawdown", "Enclosed Sample"],
   pressFinish:       ["Gloss", "Satin", "Matte", "UV", "Raw"],
   bleeds:            ["Front", "Back"],
-  silkScreenTarget:  ["Archive", "New"],
-  screenType:        ["Flood", "Spot"],
+  silkEffect:        ["Flood", "Spot", "Knock Out"],
+  silkTarget:        ["Archive", "New"],
   magEncodingType:   ["Hi-Co", "Mid-Co", "Lo-Co"],
-  magTracks:         ["Track 1", "Track 2", "Track 3"]
+  magTracks:         ["Track 1", "Track 2", "Track 3"],
+  shrinkWrapPacks:   ["10", "25", "50", "100", "Special"],
+  sleeveQty:         ["10", "25", "50", "100", "250", "500"]
 };
 
 /* RFID Inlay Type is a two-step picker: pick a family button, then a row of
@@ -906,13 +922,13 @@ var RFID_FAMILIES = {
     'sec-proof':    ['proofOptions','proofAttention','signOffDate','proofCustomDetails'],
     'sec-callouts': ['pliOnBack','arrow','pcNumber'],
     'sec-art':      ['frontArt','backArt'],
-    'sec-tooling':  ['lockSystem','lockSystemTech','dieNumber','size','thickness'],
-    'sec-rfid':     ['rfidInlayType','vingEncoding','uidRead','returnFile'],
+    'sec-tooling':  ['dieNumber','size','thickness'],
+    'sec-rfid':     ['rfidInlayType','vingEncoding','uidRead','returnFile','lockSystem','lockSystemTech'],
     'sec-magenc':   ['magEncodingType','magTracks','magEncodingDetails'],
     'sec-stock':    ['stock','stockColor'],
     'sec-press':    ['pressTarget','pressFrontFinish','pressBackFinish','frontColor','backColor','bleeds'],
-    'sec-silk':     ['silkScreen','silkScreenTarget','screenType','screenEffect'],
-    'sec-finish':   ['holePunch','holePunchDetails','shrinkWrapPacks','sleeve','sleeveLabels'],
+    'sec-silk':     ['silkFrontEffect','silkFrontTarget','silkFrontScreenNumber','silkBackEffect','silkBackTarget','silkBackScreenNumber'],
+    'sec-finish':   ['holePunch','holePunchDetails','shrinkWrapPacks','shrinkWrapSpecialDetails','sleeve','sleeveLabels'],
     'sec-ship':     ['overageOK','shipEarly','undersOK'],
     'sec-notes':    ['instructions']
   };
@@ -1018,10 +1034,14 @@ var RFID_FAMILIES = {
     group._setVal = setVal;
   });
 
-  // ---- RFID Inlay Type: family button, then that family's type buttons ----
-  var rfidFamilyGroup = document.getElementById('rfidFamilyGroup');
+  // ---- RFID Inlay Type: family buttons stacked vertically; clicking one
+  // shows its specific chip-type buttons inline, next to that same button.
+  // rfidTypeGroup is a single persistent element (never destroyed, just
+  // moved between rows) so it's always in the document for allFieldEls()
+  // to find, even when no family is currently selected (then it's hidden
+  // and left attached at the end of the row list).
+  var rfidFamilyRows = document.getElementById('rfidFamilyRows');
   var rfidTypeGroup = document.getElementById('rfidTypeGroup');
-  var rfidTypePanel = document.getElementById('rfidTypePanel');
   rfidTypeGroup.value = '';
 
   function findRfidFamily(typeVal){
@@ -1029,19 +1049,6 @@ var RFID_FAMILIES = {
       if (RFID_FAMILIES[fam].indexOf(typeVal) !== -1) return fam;
     }
     return null;
-  }
-  function renderRfidFamilyButtons(activeFamily){
-    rfidFamilyGroup.innerHTML = '';
-    Object.keys(RFID_FAMILIES).forEach(function(fam){
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'opt' + (fam === activeFamily ? ' active' : '');
-      b.textContent = fam;
-      b.addEventListener('click', function(){
-        selectRfidFamily(activeFamily === fam ? null : fam);
-      });
-      rfidFamilyGroup.appendChild(b);
-    });
   }
   function renderRfidTypeButtons(family, activeType){
     rfidTypeGroup.innerHTML = '';
@@ -1061,36 +1068,65 @@ var RFID_FAMILIES = {
       rfidTypeGroup.appendChild(b);
     });
   }
+  function renderRfidFamilyRows(activeFamily, activeType){
+    if (rfidTypeGroup.parentNode) rfidTypeGroup.parentNode.removeChild(rfidTypeGroup);
+    rfidFamilyRows.innerHTML = '';
+    Object.keys(RFID_FAMILIES).forEach(function(fam){
+      var row = document.createElement('div');
+      row.className = 'rfid-family-row';
+      var famBtn = document.createElement('button');
+      famBtn.type = 'button';
+      famBtn.className = 'opt fam-opt' + (fam === activeFamily ? ' active' : '');
+      famBtn.textContent = fam;
+      famBtn.addEventListener('click', function(){
+        selectRfidFamily(activeFamily === fam ? null : fam);
+      });
+      row.appendChild(famBtn);
+      if (fam === activeFamily) {
+        rfidTypeGroup.hidden = false;
+        renderRfidTypeButtons(fam, activeType);
+        row.appendChild(rfidTypeGroup);
+      }
+      rfidFamilyRows.appendChild(row);
+    });
+    if (!activeFamily) {
+      rfidTypeGroup.hidden = true;
+      rfidTypeGroup.innerHTML = '';
+      rfidFamilyRows.appendChild(rfidTypeGroup);
+    }
+  }
   function selectRfidFamily(family){
-    renderRfidFamilyButtons(family);
-    rfidTypePanel.classList.toggle('open', !!family);
-    renderRfidTypeButtons(family, null);
     rfidTypeGroup.value = '';
     rfidTypeGroup.setAttribute('data-print-val', '—');
+    renderRfidFamilyRows(family, null);
     onFieldChange('rfidInlayType');
   }
   rfidTypeGroup._setVal = function(val){
     var fam = findRfidFamily(val);
-    renderRfidFamilyButtons(fam);
-    rfidTypePanel.classList.toggle('open', !!fam);
-    renderRfidTypeButtons(fam, val);
     rfidTypeGroup.value = fam ? val : '';
     rfidTypeGroup.setAttribute('data-print-val', (fam ? val : '') || '—');
+    renderRfidFamilyRows(fam, val);
   };
   selectRfidFamily(null);
 
   // ---- Conditional reveals ----
-  var silkYN = document.querySelector('.yn[data-field="silkScreen"]');
-  var silkPanel = document.getElementById('silkPanel');
   var holeYN = document.querySelector('.yn[data-field="holePunch"]');
   var holeField = document.getElementById('holePunchDetailsField');
   var proofOptionsGroup = document.querySelector('.btn-group[data-field="proofOptions"]');
   var proofCustomField = document.getElementById('proofCustomField');
+  var silkFrontTargetGroup = document.querySelector('.btn-group[data-field="silkFrontTarget"]');
+  var silkFrontScreenNumberField = document.getElementById('silkFrontScreenNumberField');
+  var silkBackTargetGroup = document.querySelector('.btn-group[data-field="silkBackTarget"]');
+  var silkBackScreenNumberField = document.getElementById('silkBackScreenNumberField');
+  var shrinkWrapPacksGroup = document.querySelector('.btn-group[data-field="shrinkWrapPacks"]');
+  var shrinkWrapSpecialField = document.getElementById('shrinkWrapSpecialField');
 
   function onFieldChange(field){
-    if (field === 'silkScreen') silkPanel.classList.toggle('open', silkYN.value === 'Yes');
     if (field === 'holePunch') holeField.style.display = (holeYN.value === 'Yes') ? 'flex' : 'none';
     if (field === 'proofOptions') proofCustomField.style.display = (proofOptionsGroup.value === 'Customer Specific') ? 'flex' : 'none';
+    if (field === 'silkFrontTarget') silkFrontScreenNumberField.style.display = (silkFrontTargetGroup.value === 'Archive') ? 'flex' : 'none';
+    if (field === 'silkBackTarget') silkBackScreenNumberField.style.display = (silkBackTargetGroup.value === 'Archive') ? 'flex' : 'none';
+    if (field === 'shrinkWrapPacks') shrinkWrapSpecialField.style.display = (shrinkWrapPacksGroup.value === 'Special') ? 'flex' : 'none';
     updateSectionDots();
   }
   document.querySelectorAll('input[data-field], textarea[data-field]').forEach(function(el){
@@ -1162,9 +1198,11 @@ var RFID_FAMILIES = {
         mismatches.push({ label: el.getAttribute('data-label'), saved: savedVal });
       }
     });
-    onFieldChange('silkScreen');
     onFieldChange('holePunch');
     onFieldChange('proofOptions');
+    onFieldChange('silkFrontTarget');
+    onFieldChange('silkBackTarget');
+    onFieldChange('shrinkWrapPacks');
     updateSectionDots();
     return mismatches;
   }
@@ -1260,9 +1298,11 @@ var RFID_FAMILIES = {
     if (!confirm('Clear all fields and section selections on this form? This cannot be undone.')) return;
     hideDraftWarning();
     allFieldEls().forEach(function(el){ setValue(el, ''); });
-    onFieldChange('silkScreen');
     onFieldChange('holePunch');
     onFieldChange('proofOptions');
+    onFieldChange('silkFrontTarget');
+    onFieldChange('silkBackTarget');
+    onFieldChange('shrinkWrapPacks');
     resetSectionStates();
     toast('Form cleared');
   });
@@ -1271,6 +1311,24 @@ var RFID_FAMILIES = {
 
   function padCol(text, width){
     return text.length >= width ? text + '  ' : text + ' '.repeat(width - text.length);
+  }
+  // Word-wraps free text to a width that fits comfortably on an A4 page in a
+  // monospace font, preserving any paragraph breaks the user typed.
+  var A4_WRAP_WIDTH = 90;
+  function wrapText(text, width){
+    var out = [];
+    text.split('\n').forEach(function(paragraph){
+      if (!paragraph.trim()) { out.push(''); return; }
+      var words = paragraph.split(/\s+/).filter(Boolean);
+      var current = '';
+      words.forEach(function(word){
+        if (!current) { current = word; return; }
+        if ((current + ' ' + word).length > width) { out.push(current); current = word; }
+        else { current += ' ' + word; }
+      });
+      if (current) out.push(current);
+    });
+    return out;
   }
   // Blank fields normally show as "—", but a couple of fields have a real
   // meaning for "nothing selected" that reads better than a bare dash.
@@ -1342,7 +1400,13 @@ var RFID_FAMILIES = {
     if (!notesCard.hidden) {
       lines.push('== SPECIAL INSTRUCTIONS ==');
       var notesEl = notesCard.querySelector('[data-field]');
-      lines.push('Instructions: ' + (getValue(notesEl).trim() || '—'));
+      var notesVal = getValue(notesEl).trim();
+      if (notesVal) {
+        lines.push('Instructions:');
+        lines = lines.concat(wrapText(notesVal, A4_WRAP_WIDTH));
+      } else {
+        lines.push('Instructions: —');
+      }
     }
     return lines.join('\n');
   }
