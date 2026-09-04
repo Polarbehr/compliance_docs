@@ -1285,10 +1285,7 @@ var RFID_FAMILIES = {
   function buildSummaryText(){
     var order = ['sec-job','sec-proof','sec-callouts','sec-art','sec-tooling','sec-rfid','sec-magenc','sec-stock','sec-press','sec-silk','sec-finish','sec-ship'];
 
-    // Assign whole sections to whichever column is currently shorter, so a
-    // section's lines always stay together — columns end up uneven in
-    // length rather than ever splitting a section between them.
-    var colA = [], colB = [];
+    var blocks = [];
     order.forEach(function(secId){
       var card = document.getElementById(secId);
       if (card.hidden) return;
@@ -1296,8 +1293,27 @@ var RFID_FAMILIES = {
       if (!fields.length) return;
       var block = sectionBlockLines(card);
       block.push('');
-      if (colA.length <= colB.length) colA = colA.concat(block);
-      else colB = colB.concat(block);
+      blocks.push(block);
+    });
+
+    // Column A gets a running prefix of sections (in page order), column B
+    // gets the rest — so reading straight down column A then column B lands
+    // on the same section order as the page, instead of interleaving them.
+    // The split point is wherever column A's total lines first reach about
+    // half of everything, so a section's lines always stay together and the
+    // two columns end up uneven in length rather than ever splitting one.
+    var totalLines = blocks.reduce(function(sum, b){ return sum + b.length; }, 0);
+    var half = totalLines / 2;
+    var colA = [], colB = [];
+    var running = 0, crossedHalf = false;
+    blocks.forEach(function(block){
+      if (!crossedHalf) {
+        colA = colA.concat(block);
+        running += block.length;
+        if (running >= half) crossedHalf = true;
+      } else {
+        colB = colB.concat(block);
+      }
     });
 
     var COL_WIDTH = 48;
